@@ -112,7 +112,11 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
     }
   }
 
-  void _handleRecordingCompleted(String fileName, String? duration, String? path) {
+  void _handleRecordingCompleted(
+    String fileName,
+    String? duration,
+    String? path,
+  ) {
     setState(() {
       _audioFileName = fileName;
       _audioFilePath = path;
@@ -305,7 +309,8 @@ class _TranscribeCard extends StatefulWidget {
     required this.onTranscriptChanged,
   });
 
-  final void Function(String fileName, String? duration, String? filePath) onRecorded;
+  final void Function(String fileName, String? duration, String? filePath)
+  onRecorded;
   final void Function(String transcript) onTranscriptChanged;
 
   @override
@@ -443,7 +448,11 @@ class _TranscribeCardState extends State<_TranscribeCard> {
     try {
       await _recorder.stop();
       if (_recordedFileName != null) {
-        widget.onRecorded(_recordedFileName!, _formatDuration(_recordDuration), _recordedFilePath);
+        widget.onRecorded(
+          _recordedFileName!,
+          _formatDuration(_recordDuration),
+          _recordedFilePath,
+        );
       }
       if (!mounted) return;
       setState(() {
@@ -523,7 +532,8 @@ class _TranscribeCardState extends State<_TranscribeCard> {
     }
 
     final directory = await getApplicationDocumentsDirectory();
-    final savedFileName = 'picked_${DateTime.now().millisecondsSinceEpoch}_$fileName';
+    final savedFileName =
+        'picked_${DateTime.now().millisecondsSinceEpoch}_$fileName';
     final destinationPath = '${directory.path}/$savedFileName';
     try {
       await File(filePath).copy(destinationPath);

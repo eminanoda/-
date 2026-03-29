@@ -136,7 +136,8 @@ class _AudioPlaybackCardState extends State<_AudioPlaybackCard> {
   Duration _position = Duration.zero;
 
   bool get _hasAudioPath => widget.record.audioFilePath != null;
-  bool get _fileExists => _hasAudioPath && File(widget.record.audioFilePath!).existsSync();
+  bool get _fileExists =>
+      _hasAudioPath && File(widget.record.audioFilePath!).existsSync();
 
   @override
   void initState() {
@@ -226,9 +227,13 @@ class _AudioPlaybackCardState extends State<_AudioPlaybackCard> {
               IconButton(
                 onPressed: _fileExists ? _togglePlayback : null,
                 icon: Icon(
-                  _isPlaying ? CupertinoIcons.pause_circle_fill : CupertinoIcons.play_circle_fill,
+                  _isPlaying
+                      ? CupertinoIcons.pause_circle_fill
+                      : CupertinoIcons.play_circle_fill,
                   size: 28,
-                  color: _fileExists ? const Color(0xFF5672D9) : const Color(0xFFB0BEC5),
+                  color: _fileExists
+                      ? const Color(0xFF5672D9)
+                      : const Color(0xFFB0BEC5),
                 ),
               ),
             ],
@@ -248,8 +253,8 @@ class _AudioPlaybackCardState extends State<_AudioPlaybackCard> {
             _fileExists
                 ? '${_formatDuration(_position)} / ${_formatDuration(_duration)}'
                 : widget.record.audioDuration != null
-                    ? '再生準備済み: ${widget.record.audioDuration}'
-                    : '再生準備中',
+                ? '再生準備済み: ${widget.record.audioDuration}'
+                : '再生準備中',
             style: const TextStyle(
               color: Color(0xFF61708E),
               fontWeight: FontWeight.w600,
