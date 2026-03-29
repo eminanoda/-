@@ -1,0 +1,57 @@
+Running `(cd /Users/tenna/.pub-cache/hosted/pub.dev/objective_c-9.3.0/; ANDROID_HOME=/Users/tenna/Library/Android/sdk TMPDIR=/var/folders/cv/yb103sl92sn87wng_mvscb_80000gn/T/ PATH=/Applications/Xcode.app/Contents/SharedFrameworks/SwiftBuild.framework/Versions/A/PlugIns/SWBBuildService.bundle/Contents/PlugIns/SWBUniversalPlatformPlugin.bundle/Contents/Frameworks/SWBUniversalPlatform.framework/Resources:/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin:/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/local/bin:/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/libexec:/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/usr/bin:/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/usr/local/bin:/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin:/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/local/bin:/Applications/Xcode.app/Contents/Developer/usr/bin:/Applications/Xcode.app/Contents/Developer/usr/local/bin:/opt/homebrew/opt/ruby/bin:/Users/tenna/google-cloud-sdk/bin:/Users/tenna/.amplify/bin:/Users/tenna/.yarn/bin:/Users/tenna/.config/yarn/global/node_modules/.bin:/usr/local/opt/openjdk@17/bin:/Users/tenna/Library/Application Support/Code/User/globalStorage/github.copilot-chat/debugCommand:/Users/tenna/Library/Application Support/Code/User/globalStorage/github.copilot-chat/copilotCli:/Users/tenna/developer/flutter/bin:/Library/Frameworks/Python.framework/Versions/3.12/bin:/Users/tenna/.nodebrew/current/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/opt/pmk/env/global/bin:/Library/Apple/usr/bin:/usr/local/share/dotnet:/usr/local/go/bin:/Library/Frameworks/Mono.framework/Versions/Current/Commands:/Users/tenna/miniconda3/bin:/Users/tenna/miniconda3/condabin:/Users/tenna/Library/Android/sdk/platform-tools:/Users/tenna/.pub-cache/bin HOME=/Users/tenna /Users/tenna/developer/flutter/bin/cache/dart-sdk/bin/dart --packages=/Users/tenna/Desktop/surgery-counselling/.dart_tool/package_config.json /Users/tenna/Desktop/surgery-counselling/.dart_tool/hooks_runner/objective_c/7a7ae8b65967a9018b214c6a7bd3e851/hook.dill --config=/Users/tenna/Desktop/surgery-counselling/.dart_tool/hooks_runner/objective_c/7a7ae8b65967a9018b214c6a7bd3e851/input.json )`.
+INFO: 2026-03-30 07:29:55.401133: Running `/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --version`.
+
+INFO: 2026-03-30 07:29:55.573517: Running `/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --version`.
+
+INFO: 2026-03-30 07:29:55.588895: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk -target arm64-apple-ios -mios-version-min=12 -c /Users/tenna/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/include/dart_api_dl.c -fpic -I src -o /Users/tenna/Desktop/surgery-counselling/.dart_tool/hooks_runner/shared/objective_c/build/7a7ae8b659/obj/src/include/dart_api_dl.c.o
+
+INFO: 2026-03-30 07:29:55.589461: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk -target arm64-apple-ios -mios-version-min=12 -x objective-c -fobjc-arc -c /Users/tenna/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/input_stream_adapter.m -fpic -I src -o /Users/tenna/Desktop/surgery-counselling/.dart_tool/hooks_runner/shared/objective_c/build/7a7ae8b659/obj/src/input_stream_adapter.m.o
+
+INFO: 2026-03-30 07:29:55.589738: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk -target arm64-apple-ios -mios-version-min=12 -x objective-c -fobjc-arc -c /Users/tenna/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/objective_c.m -fpic -I src -o /Users/tenna/Desktop/surgery-counselling/.dart_tool/hooks_runner/shared/objective_c/build/7a7ae8b659/obj/src/objective_c.m.o
+
+INFO: 2026-03-30 07:29:55.589881: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk -target arm64-apple-ios -mios-version-min=12 -x objective-c -fobjc-arc -c /Users/tenna/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/observer.m -fpic -I src -o /Users/tenna/Desktop/surgery-counselling/.dart_tool/hooks_runner/shared/objective_c/build/7a7ae8b659/obj/src/observer.m.o
+
+INFO: 2026-03-30 07:29:55.590096: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk -target arm64-apple-ios -mios-version-min=12 -x objective-c -fobjc-arc -c /Users/tenna/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/protocol.m -fpic -I src -o /Users/tenna/Desktop/surgery-counselling/.dart_tool/hooks_runner/shared/objective_c/build/7a7ae8b659/obj/src/protocol.m.o
+
+
+
+INFO: 2026-03-30 07:29:55.590206: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk -target arm64-apple-ios -mios-version-min=12 -x objective-c -fobjc-arc -c /Users/tenna/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/objective_c_bindings_generated.m -fpic -I src -o /Users/tenna/Desktop/surgery-counselling/.dart_tool/hooks_runner/shared/objective_c/build/7a7ae8b659/obj/src/objective_c_bindings_generated.m.o
+
+INFO: 2026-03-30 07:29:55.770290: 
+INFO: 2026-03-30 07:29:55.770413: 
+INFO: 2026-03-30 07:29:55.770444: Generated /Users/tenna/Desktop/surgery-counselling/.dart_tool/hooks_runner/shared/objective_c/build/7a7ae8b659/obj/src/include/dart_api_dl.c.o
+INFO: 2026-03-30 07:29:55.770560: 
+INFO: 2026-03-30 07:29:55.770570: 
+INFO: 2026-03-30 07:29:55.770578: Generated /Users/tenna/Desktop/surgery-counselling/.dart_tool/hooks_runner/shared/objective_c/build/7a7ae8b659/obj/src/objective_c.c.o
+
+INFO: 2026-03-30 07:29:55.777223: 
+INFO: 2026-03-30 07:29:55.777303: 
+INFO: 2026-03-30 07:29:55.777334: Generated /Users/tenna/Desktop/surgery-counselling/.dart_tool/hooks_runner/shared/objective_c/build/7a7ae8b659/obj/src/observer.m.o
+
+INFO: 2026-03-30 07:29:55.780226: 
+INFO: 2026-03-30 07:29:55.780265: 
+INFO: 2026-03-30 07:29:55.780276: Generated /Users/tenna/Desktop/surgery-counselling/.dart_tool/hooks_runner/shared/objective_c/build/7a7ae8b659/obj/src/protocol.m.o
+
+INFO: 2026-03-30 07:29:55.922121: 
+INFO: 2026-03-30 07:29:55.922167: 
+INFO: 2026-03-30 07:29:55.922179: Generated /Users/tenna/Desktop/surgery-counselling/.dart_tool/hooks_runner/shared/objective_c/build/7a7ae8b659/obj/src/ns_number.m.o
+
+INFO: 2026-03-30 07:29:55.937917: 
+INFO: 2026-03-30 07:29:55.937958: 
+INFO: 2026-03-30 07:29:55.937969: Generated /Users/tenna/Desktop/surgery-counselling/.dart_tool/hooks_runner/shared/objective_c/build/7a7ae8b659/obj/src/objective_c.m.o
+
+INFO: 2026-03-30 07:29:55.941154: 
+INFO: 2026-03-30 07:29:55.941191: 
+INFO: 2026-03-30 07:29:55.941203: Generated /Users/tenna/Desktop/surgery-counselling/.dart_tool/hooks_runner/shared/objective_c/build/7a7ae8b659/obj/src/input_stream_adapter.m.o
+
+INFO: 2026-03-30 07:29:55.958115: 
+INFO: 2026-03-30 07:29:55.958148: 
+INFO: 2026-03-30 07:29:55.958159: Generated /Users/tenna/Desktop/surgery-counselling/.dart_tool/hooks_runner/shared/objective_c/build/7a7ae8b659/obj/src/objective_c_bindings_generated.m.o
+
+INFO: 2026-03-30 07:29:55.958498: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -shared -Wl,-encryptable -undefined dynamic_lookup -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk -target arm64-apple-ios -mios-version-min=12 /Users/tenna/Desktop/surgery-counselling/.dart_tool/hooks_runner/shared/objective_c/build/7a7ae8b659/obj/src/include/dart_api_dl.c.o /Users/tenna/Desktop/surgery-counselling/.dart_tool/hooks_runner/shared/objective_c/build/7a7ae8b659/obj/src/objective_c.c.o /Users/tenna/Desktop/surgery-counselling/.dart_tool/hooks_runner/shared/objective_c/build/7a7ae8b659/obj/src/input_stream_adapter.m.o /Users/tenna/Desktop/surgery-counselling/.dart_tool/hooks_runner/shared/objective_c/build/7a7ae8b659/obj/src/objective_c.m.o /Users/tenna/Desktop/surgery-counselling/.dart_tool/hooks_runner/shared/objective_c/build/7a7ae8b659/obj/src/observer.m.o /Users/tenna/Desktop/surgery-counselling/.dart_tool/hooks_runner/shared/objective_c/build/7a7ae8b659/obj/src/ns_number.m.o /Users/tenna/Desktop/surgery-counselling/.dart_tool/hooks_runner/shared/objective_c/build/7a7ae8b659/obj/src/protocol.m.o /Users/tenna/Desktop/surgery-counselling/.dart_tool/hooks_runner/shared/objective_c/build/7a7ae8b659/obj/src/objective_c_bindings_generated.m.o -o /Users/tenna/Desktop/surgery-counselling/.dart_tool/hooks_runner/shared/objective_c/build/7a7ae8b659/objective_c.dylib
+
+INFO: 2026-03-30 07:29:56.079003: 
+INFO: 2026-03-30 07:29:56.079066: ld: warning: -undefined dynamic_lookup is deprecated on iOS
+
+INFO: 2026-03-30 07:29:56.079082: Generated /Users/tenna/Desktop/surgery-counselling/.dart_tool/hooks_runner/shared/objective_c/build/7a7ae8b659/objective_c.dylib
+

@@ -1,5 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:record/record.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 import 'models/conuseling_record.dart';
 import 'widgets/premium_ai_summary_card.dart';
@@ -21,6 +27,8 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
   );
   String _selectedLanguage = '日本語';
   bool _showPremiumPreview = false;
+  String? _audioFileName;
+  String? _audioDuration;
 
   @override
   void dispose() {
@@ -39,6 +47,8 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
       language: _selectedLanguage,
       memo: _memoController.text.trim(),
       isPremium: _showPremiumPreview,
+      audioFileName: _audioFileName,
+      audioDuration: _audioDuration,
     );
 
     try {
@@ -53,6 +63,13 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
         context,
       ).showSnackBar(SnackBar(content: Text('保存に失敗しました: $error')));
     }
+  }
+
+  void _handleRecordingCompleted(String fileName, String? duration) {
+    setState(() {
+      _audioFileName = fileName;
+      _audioDuration = duration;
+    });
   }
 
   @override
@@ -105,7 +122,7 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
               },
             ),
           ] else ...[
-            const _PremiumPreviewCard(),
+            _TranscribeCard(onRecorded: _handleRecordingCompleted),
           ],
           const SizedBox(height: 20),
           Row(
@@ -170,8 +187,191 @@ class _FormField extends StatelessWidget {
   }
 }
 
-class _PremiumPreviewCard extends StatelessWidget {
-  const _PremiumPreviewCard();
+class _TranscribeCard extends StatefulWidget {
+  const _TranscribeCard({required this.onRecorded});
+
+  final void Function(String fileName, String? duration) onRecorded;
+
+  @override
+  State<_TranscribeCard> createState() => _TranscribeCardState();
+}
+
+class _TranscribeCardState extends State<_TranscribeCard> {
+  final AudioRecorder _recorder = AudioRecorder();
+  final AudioPlayer _player = AudioPlayer();
+  bool _isRecording = false;
+  bool _isPlaying = false;
+  double _audioLevel = 0;
+  Duration _recordDuration = Duration.zero;
+  String _durationText = '00:00';
+  String? _recordedFileName;
+  String? _recordedFilePath;
+  Timer? _meterTimer;
+  Timer? _durationTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _player.onPlayerComplete.listen((_) {
+      if (!mounted) return;
+      setState(() {
+        _isPlaying = false;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _meterTimer?.cancel();
+    _durationTimer?.cancel();
+    _player.dispose();
+    super.dispose();
+  }
+
+  Future<void> _toggleRecording() async {
+    if (_isRecording) {
+      await _stopRecording();
+    } else {
+      await _startRecording();
+    }
+  }
+
+  Future<void> _startRecording() async {
+    if (!await _recorder.hasPermission()) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('マイクの許可が必要です。')));
+      return;
+    }
+
+    final directory = await getApplicationDocumentsDirectory();
+    _recordedFileName = 'record_${DateTime.now().millisecondsSinceEpoch}.m4a';
+    final path = '${directory.path}/$_recordedFileName';
+
+    try {
+      await _recorder.start(
+        const RecordConfig(
+          encoder: AudioEncoder.aacLc,
+          bitRate: 128000,
+          sampleRate: 44100,
+        ),
+        path: path,
+      );
+      _recordedFilePath = path;
+      _meterTimer?.cancel();
+      _durationTimer?.cancel();
+      _recordDuration = Duration.zero;
+      setState(() {
+        _isRecording = true;
+        _audioLevel = 0;
+        _durationText = '00:00';
+      });
+
+      _meterTimer = Timer.periodic(const Duration(milliseconds: 100), (
+        _,
+      ) async {
+        if (!mounted || !_isRecording) return;
+        final amplitude = await _recorder.getAmplitude();
+        final normalized = (amplitude.current / 120).clamp(0.0, 1.0);
+        setState(() {
+          _audioLevel = normalized;
+        });
+      });
+
+      _durationTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (!mounted || !_isRecording) return;
+        setState(() {
+          _recordDuration += const Duration(seconds: 1);
+          _durationText = _formatDuration(_recordDuration);
+        });
+      });
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('録音の開始に失敗しました: $error')));
+    }
+  }
+
+  Future<void> _stopRecording() async {
+    _meterTimer?.cancel();
+    _durationTimer?.cancel();
+    try {
+      await _recorder.stop();
+      if (_recordedFileName != null) {
+        widget.onRecorded(_recordedFileName!, _formatDuration(_recordDuration));
+      }
+      if (!mounted) return;
+      setState(() {
+        _isRecording = false;
+        _audioLevel = 0;
+      });
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('録音を停止しました')));
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('録音の停止に失敗しました: $error')));
+    }
+  }
+
+  Future<void> _pickAudioFile() async {
+    final result = await FilePicker.platform.pickFiles(type: FileType.audio);
+    if (result == null || result.files.isEmpty) {
+      return;
+    }
+
+    final audioFile = result.files.first;
+    final fileName = audioFile.name;
+    final filePath = audioFile.path;
+    if (filePath == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('音声ファイルの読み込みに失敗しました。')));
+      return;
+    }
+
+    setState(() {
+      _recordedFileName = fileName;
+      _recordedFilePath = filePath;
+    });
+    widget.onRecorded(fileName, null);
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('音声ファイルを追加しました: $fileName')));
+  }
+
+  Future<void> _togglePlayback() async {
+    final path = _recordedFilePath;
+    if (path == null || _isRecording) {
+      return;
+    }
+
+    if (_isPlaying) {
+      await _player.pause();
+      setState(() {
+        _isPlaying = false;
+      });
+      return;
+    }
+
+    await _player.play(DeviceFileSource(path));
+    setState(() {
+      _isPlaying = true;
+    });
+  }
+
+  String _formatDuration(Duration duration) {
+    final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -185,15 +385,19 @@ class _PremiumPreviewCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: FilledButton.icon(
-                    onPressed: () {},
-                    icon: const Icon(CupertinoIcons.mic),
-                    label: const Text('録音開始'),
+                    onPressed: _toggleRecording,
+                    icon: Icon(
+                      _isRecording
+                          ? CupertinoIcons.stop_fill
+                          : CupertinoIcons.mic,
+                    ),
+                    label: Text(_isRecording ? '録音停止' : '録音開始'),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () {},
+                    onPressed: _pickAudioFile,
                     icon: const Icon(CupertinoIcons.arrow_up_doc),
                     label: const Text('音声を追加'),
                     style: OutlinedButton.styleFrom(
@@ -217,20 +421,46 @@ class _PremiumPreviewCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: const Color(0xFFD5E2F4)),
               ),
-              child: const Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(CupertinoIcons.waveform, color: Color(0xFF5672D9)),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      '32:48',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF24365F),
+                  Row(
+                    children: [
+                      const Icon(
+                        CupertinoIcons.waveform,
+                        color: Color(0xFF5672D9),
                       ),
-                    ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          _isRecording
+                              ? '録音中 $_durationText'
+                              : _recordedFileName != null
+                              ? '追加済み: ${_recordedFileName!}'
+                              : '準備完了',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF24365F),
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: _recordedFilePath != null && !_isRecording
+                            ? _togglePlayback
+                            : null,
+                        icon: Icon(
+                          _isPlaying
+                              ? CupertinoIcons.pause_circle
+                              : CupertinoIcons.play_circle,
+                          color: _recordedFilePath != null && !_isRecording
+                              ? const Color(0xFF5672D9)
+                              : const Color(0xFFB0BEC5),
+                        ),
+                      ),
+                    ],
                   ),
-                  Icon(CupertinoIcons.play_circle),
+                  const SizedBox(height: 12),
+                  _AudioLevelMeter(level: _audioLevel),
                 ],
               ),
             ),
@@ -256,6 +486,36 @@ class _PremiumPreviewCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _AudioLevelMeter extends StatelessWidget {
+  const _AudioLevelMeter({required this.level});
+
+  final double level;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: List.generate(6, (index) {
+        final threshold = (index + 1) / 6;
+        final isActive = level >= threshold;
+        final barHeight = 8.0 + index * 6.0;
+        return Expanded(
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 2),
+            height: barHeight,
+            decoration: BoxDecoration(
+              color: isActive
+                  ? const Color(0xFF5672D9)
+                  : const Color(0xFFD5E2F4),
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+        );
+      }),
     );
   }
 }
