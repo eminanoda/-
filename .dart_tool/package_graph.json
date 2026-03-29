@@ -11,6 +11,7 @@
         "cupertino_icons",
         "file_picker",
         "flutter",
+        "http",
         "path_provider",
         "record",
         "speech_to_text"
@@ -57,6 +58,15 @@
         "meta",
         "pedantic",
         "speech_to_text_platform_interface"
+      ]
+    },
+    {
+      "name": "http",
+      "version": "0.13.6",
+      "dependencies": [
+        "async",
+        "http_parser",
+        "meta"
       ]
     },
     {
@@ -256,19 +266,28 @@
       ]
     },
     {
+      "name": "http_parser",
+      "version": "4.1.2",
+      "dependencies": [
+        "collection",
+        "source_span",
+        "string_scanner",
+        "typed_data"
+      ]
+    },
+    {
+      "name": "async",
+      "version": "2.13.0",
+      "dependencies": [
+        "collection",
+        "meta"
+      ]
+    },
+    {
       "name": "uuid",
       "version": "3.0.7",
       "dependencies": [
         "crypto"
-      ]
-    },
-    {
-      "name": "http",
-      "version": "0.13.6",
-      "dependencies": [
-        "async",
-        "http_parser",
-        "meta"
       ]
     },
     {
@@ -463,14 +482,6 @@
       "dependencies": []
     },
     {
-      "name": "async",
-      "version": "2.13.0",
-      "dependencies": [
-        "collection",
-        "meta"
-      ]
-    },
-    {
       "name": "leak_tracker_testing",
       "version": "3.0.2",
       "dependencies": [
@@ -520,19 +531,16 @@
       ]
     },
     {
-      "name": "crypto",
-      "version": "3.0.7",
+      "name": "typed_data",
+      "version": "1.4.0",
       "dependencies": [
-        "typed_data"
+        "collection"
       ]
     },
     {
-      "name": "http_parser",
-      "version": "4.1.2",
+      "name": "crypto",
+      "version": "3.0.7",
       "dependencies": [
-        "collection",
-        "source_span",
-        "string_scanner",
         "typed_data"
       ]
     },
@@ -571,13 +579,6 @@
       "name": "vm_service",
       "version": "15.0.2",
       "dependencies": []
-    },
-    {
-      "name": "typed_data",
-      "version": "1.4.0",
-      "dependencies": [
-        "collection"
-      ]
     },
     {
       "name": "pub_semver",

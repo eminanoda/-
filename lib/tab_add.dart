@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import 'package:record/record.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
+import 'package:http/http.dart' as http;
 
 import 'models/conuseling_record.dart';
 import 'widgets/premium_ai_summary_card.dart';
@@ -19,6 +21,8 @@ class CounselingRecordScreen extends StatefulWidget {
   @override
   State<CounselingRecordScreen> createState() => _CounselingRecordScreenState();
 }
+
+const String _aiSummaryUrl = String.fromEnvironment('AI_SUMMARY_URL');
 
 class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
   final _clinicController = TextEditingController(text: 'OO美容クリニック 銀座院');
@@ -32,6 +36,7 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
   String? _audioFileName;
   String? _audioDuration;
   String? _transcript;
+  String? _aiSummary;
 
   @override
   void dispose() {
@@ -43,6 +48,15 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
   }
 
   Future<void> _saveRecordAsJson() async {
+    String? aiSummary;
+    if (_transcript != null && _transcript!.trim().isNotEmpty) {
+      aiSummary = await _fetchAiSummary(_transcript!);
+      aiSummary ??= _generateAiSummary(_transcript!);
+    }
+    setState(() {
+      _aiSummary = aiSummary;
+    });
+
     final record = CounselingRecord(
       clinic: _clinicController.text.trim(),
       doctor: _doctorController.text.trim(),
@@ -53,6 +67,7 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
       audioFileName: _audioFileName,
       audioDuration: _audioDuration,
       transcript: _transcript,
+      aiSummary: aiSummary,
     );
 
     try {
@@ -74,6 +89,62 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
       _audioFileName = fileName;
       _audioDuration = duration;
     });
+  }
+
+  Future<String?> _fetchAiSummary(String transcript) async {
+    if (_aiSummaryUrl.isEmpty) {
+      return null;
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse(_aiSummaryUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'transcript': transcript,
+          'language': _selectedLanguage,
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        return null;
+      }
+
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      return (body['summary'] as String?)?.trim();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  String _generateAiSummary(String text) {
+    final cleaned = text.trim();
+    if (cleaned.isEmpty) {
+      return '';
+    }
+
+    final sentenceCandidates = cleaned
+        .split(RegExp(r'[。！？\n]+'))
+        .map((segment) => segment.trim())
+        .where((segment) => segment.isNotEmpty)
+        .toList();
+    if (sentenceCandidates.isEmpty) {
+      return cleaned.length <= 120 ? cleaned : '${cleaned.substring(0, 120)}…';
+    }
+
+    final bullets = <String>[];
+    for (final sentence in sentenceCandidates) {
+      if (bullets.length >= 4) break;
+      final item =
+          sentence.endsWith('。') ||
+              sentence.endsWith('！') ||
+              sentence.endsWith('？')
+          ? sentence
+          : '$sentence。';
+      bullets.add(item);
+    }
+
+    return bullets.join('\n');
   }
 
   @override
@@ -132,6 +203,10 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
                 _transcript = transcript;
               }),
             ),
+            if (_aiSummary != null) ...[
+              const SizedBox(height: 14),
+              PremiumAiSummaryCard(summary: _aiSummary),
+            ],
           ],
           const SizedBox(height: 20),
           Row(
@@ -162,11 +237,7 @@ class _SectionTitle extends StatelessWidget {
 }
 
 class _FormField extends StatelessWidget {
-  const _FormField({
-    required this.label,
-    this.controller,
-    this.maxLines = 1,
-  });
+  const _FormField({required this.label, this.controller, this.maxLines = 1});
 
   final String label;
   final TextEditingController? controller;
@@ -553,7 +624,9 @@ class _TranscribeCardState extends State<_TranscribeCard> {
                   child: FilledButton.icon(
                     onPressed: _speechAvailable ? _toggleListening : null,
                     icon: Icon(
-                      _isListening ? CupertinoIcons.stop_fill : CupertinoIcons.mic_fill,
+                      _isListening
+                          ? CupertinoIcons.stop_fill
+                          : CupertinoIcons.mic_fill,
                     ),
                     label: Text(_isListening ? '停止して保存' : '文字起こし開始'),
                   ),

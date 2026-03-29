@@ -51,27 +51,29 @@ class CounselingRecordDetailScreen extends StatelessWidget {
             const SizedBox(height: 14),
             _DetailSection(
               title: '録音',
-              child:  (record.audioFileName == null) ? _UnavailableBlock(
-                          icon: CupertinoIcons.mic_slash,
-                          text: 'この記録には音声ファイルがありません。',
-                        ) : Column(
-                spacing: 12,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _AudioPlaybackCard(record: record),
-                  PremiumAiSummaryCard(),
-                  Text('文字起こし', style: theme.textTheme.titleMedium),
-                  record.transcript == null
-                      ? const _UnavailableBlock(
-                          icon: CupertinoIcons.text_bubble,
-                          text: '文字起こしは未保存です。',
-                        )
-                      : Text(
-                          record.transcript!,
-                          style: theme.textTheme.bodyLarge,
-                        ),
-                ],
-              ),
+              child: (record.audioFileName == null)
+                  ? _UnavailableBlock(
+                      icon: CupertinoIcons.mic_slash,
+                      text: 'この記録には音声ファイルがありません。',
+                    )
+                  : Column(
+                      spacing: 12,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _AudioPlaybackCard(record: record),
+                        PremiumAiSummaryCard(summary: record.aiSummary),
+                        Text('文字起こし', style: theme.textTheme.titleMedium),
+                        record.transcript == null
+                            ? const _UnavailableBlock(
+                                icon: CupertinoIcons.text_bubble,
+                                text: '文字起こしは未保存です。',
+                              )
+                            : Text(
+                                record.transcript!,
+                                style: theme.textTheme.bodyLarge,
+                              ),
+                      ],
+                    ),
             ),
             const SizedBox(height: 14),
             _DetailSection(
@@ -84,7 +86,6 @@ class CounselingRecordDetailScreen extends StatelessWidget {
     );
   }
 }
-
 
 class _DetailSection extends StatelessWidget {
   const _DetailSection({required this.title, required this.child});
@@ -153,7 +154,7 @@ class _AudioPlaybackCard extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  ''/*record.audioFileName!*/,
+                  '' /*record.audioFileName!*/,
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF24365F),
@@ -215,5 +216,3 @@ class _UnavailableBlock extends StatelessWidget {
     );
   }
 }
-
-

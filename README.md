@@ -1,3 +1,4 @@
 # surgery_memo
 
-A new Flutter project.
+todo 音声が既にある場合、再度録音しようとしたら警告表示
+todo 課金されたら課金ページの購入ボタン非表示、登録済み表示
