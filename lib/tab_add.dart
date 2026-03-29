@@ -6,6 +6,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:speech_to_text/speech_recognition_result.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 
 import 'models/conuseling_record.dart';
 import 'widgets/premium_ai_summary_card.dart';
@@ -29,6 +31,7 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
   bool _showPremiumPreview = false;
   String? _audioFileName;
   String? _audioDuration;
+  String? _transcript;
 
   @override
   void dispose() {
@@ -49,6 +52,7 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
       isPremium: _showPremiumPreview,
       audioFileName: _audioFileName,
       audioDuration: _audioDuration,
+      transcript: _transcript,
     );
 
     try {
@@ -122,7 +126,12 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
               },
             ),
           ] else ...[
-            _TranscribeCard(onRecorded: _handleRecordingCompleted),
+            _TranscribeCard(
+              onRecorded: _handleRecordingCompleted,
+              onTranscriptChanged: (transcript) => setState(() {
+                _transcript = transcript;
+              }),
+            ),
           ],
           const SizedBox(height: 20),
           Row(
@@ -155,13 +164,11 @@ class _SectionTitle extends StatelessWidget {
 class _FormField extends StatelessWidget {
   const _FormField({
     required this.label,
-    this.initialValue = '',
     this.controller,
     this.maxLines = 1,
   });
 
   final String label;
-  final String initialValue;
   final TextEditingController? controller;
   final int maxLines;
 
@@ -179,7 +186,7 @@ class _FormField extends StatelessWidget {
         const SizedBox(height: 8),
         TextFormField(
           controller: controller,
-          initialValue: controller == null ? initialValue : null,
+          initialValue: controller == null ? '' : null,
           maxLines: maxLines,
         ),
       ],
@@ -188,9 +195,13 @@ class _FormField extends StatelessWidget {
 }
 
 class _TranscribeCard extends StatefulWidget {
-  const _TranscribeCard({required this.onRecorded});
+  const _TranscribeCard({
+    required this.onRecorded,
+    required this.onTranscriptChanged,
+  });
 
   final void Function(String fileName, String? duration) onRecorded;
+  final void Function(String transcript) onTranscriptChanged;
 
   @override
   State<_TranscribeCard> createState() => _TranscribeCardState();
@@ -199,13 +210,18 @@ class _TranscribeCard extends StatefulWidget {
 class _TranscribeCardState extends State<_TranscribeCard> {
   final AudioRecorder _recorder = AudioRecorder();
   final AudioPlayer _player = AudioPlayer();
+  final SpeechToText _speechToText = SpeechToText();
+  final TextEditingController _transcriptController = TextEditingController();
   bool _isRecording = false;
   bool _isPlaying = false;
+  bool _isListening = false;
+  bool _speechAvailable = false;
   double _audioLevel = 0;
   Duration _recordDuration = Duration.zero;
   String _durationText = '00:00';
   String? _recordedFileName;
   String? _recordedFilePath;
+  String _selectedLanguage = '日本語';
   Timer? _meterTimer;
   Timer? _durationTimer;
 
@@ -218,14 +234,36 @@ class _TranscribeCardState extends State<_TranscribeCard> {
         _isPlaying = false;
       });
     });
+    _transcriptController.addListener(() {
+      if (!mounted) return;
+      widget.onTranscriptChanged(_transcriptController.text);
+    });
+    _initSpeech();
   }
 
   @override
   void dispose() {
     _meterTimer?.cancel();
     _durationTimer?.cancel();
+    _transcriptController.dispose();
     _player.dispose();
     super.dispose();
+  }
+
+  Future<void> _initSpeech() async {
+    final available = await _speechToText.initialize(
+      onError: (error) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('音声認識の初期化に失敗しました: ${error.errorMsg}')),
+        );
+      },
+      onStatus: (_) {},
+    );
+    if (!mounted) return;
+    setState(() {
+      _speechAvailable = available;
+    });
   }
 
   Future<void> _toggleRecording() async {
@@ -316,6 +354,50 @@ class _TranscribeCardState extends State<_TranscribeCard> {
         context,
       ).showSnackBar(SnackBar(content: Text('録音の停止に失敗しました: $error')));
     }
+  }
+
+  Future<void> _toggleListening() async {
+    if (_isListening) {
+      await _stopListening();
+    } else {
+      await _startListening();
+    }
+  }
+
+  Future<void> _startListening() async {
+    if (!_speechAvailable) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('音声認識が利用できません。')));
+      return;
+    }
+
+    await _speechToText.listen(
+      onResult: _onSpeechResult,
+      localeId: _selectedLanguage == '日本語' ? 'ja_JP' : 'ko_KR',
+      listenMode: ListenMode.dictation,
+      partialResults: true,
+    );
+    if (!mounted) return;
+    setState(() {
+      _isListening = true;
+    });
+  }
+
+  Future<void> _stopListening() async {
+    await _speechToText.stop();
+    if (!mounted) return;
+    setState(() {
+      _isListening = false;
+    });
+  }
+
+  void _onSpeechResult(SpeechRecognitionResult result) {
+    if (!mounted) return;
+    setState(() {
+      _transcriptController.text = result.recognizedWords;
+    });
   }
 
   Future<void> _pickAudioFile() async {
@@ -465,21 +547,41 @@ class _TranscribeCardState extends State<_TranscribeCard> {
               ),
             ),
             const SizedBox(height: 14),
-            DropdownButtonFormField<String>(
-              initialValue: '日本語',
-              items: const [
-                DropdownMenuItem(value: '日本語', child: Text('日本語')),
-                DropdownMenuItem(value: '韓国語', child: Text('韓国語')),
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: _speechAvailable ? _toggleListening : null,
+                    icon: Icon(
+                      _isListening ? CupertinoIcons.stop_fill : CupertinoIcons.mic_fill,
+                    ),
+                    label: Text(_isListening ? '停止して保存' : '文字起こし開始'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    initialValue: _selectedLanguage,
+                    items: const [
+                      DropdownMenuItem(value: '日本語', child: Text('日本語')),
+                      DropdownMenuItem(value: '韓国語', child: Text('韓国語')),
+                    ],
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setState(() {
+                        _selectedLanguage = value;
+                      });
+                    },
+                    decoration: const InputDecoration(labelText: '文字起こし言語'),
+                  ),
+                ),
               ],
-              onChanged: (_) {},
-              decoration: const InputDecoration(labelText: '文字起こし言語'),
             ),
             const SizedBox(height: 14),
-            const _FormField(
+            _FormField(
               label: '文字起こし結果',
               maxLines: 6,
-              initialValue:
-                  '先生: ダウンタイムは1週間ほどです。腫れのピークは2日目で、抜糸は7日後になります。費用は麻酔代込みでの案内です。',
+              controller: _transcriptController,
             ),
             const SizedBox(height: 14),
             const PremiumAiSummaryCard(),

@@ -9,6 +9,7 @@
 import 'package:audioplayers_web/audioplayers_web.dart';
 import 'package:file_picker/_internal/file_picker_web.dart';
 import 'package:record_web/record_web.dart';
+import 'package:speech_to_text/speech_to_text_web.dart';
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 
 void registerPlugins([final Registrar? pluginRegistrar]) {
@@ -16,5 +17,6 @@ void registerPlugins([final Registrar? pluginRegistrar]) {
   AudioplayersPlugin.registerWith(registrar);
   FilePickerWeb.registerWith(registrar);
   RecordPluginWeb.registerWith(registrar);
+  SpeechToTextPlugin.registerWith(registrar);
   registrar.registerMessageHandler();
 }

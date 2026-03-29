@@ -12,7 +12,8 @@
         "file_picker",
         "flutter",
         "path_provider",
-        "record"
+        "record",
+        "speech_to_text"
       ],
       "devDependencies": [
         "flutter_lints",
@@ -42,6 +43,20 @@
         "stream_channel",
         "test_api",
         "vector_math"
+      ]
+    },
+    {
+      "name": "speech_to_text",
+      "version": "5.6.1",
+      "dependencies": [
+        "clock",
+        "flutter",
+        "flutter_web_plugins",
+        "js",
+        "json_annotation",
+        "meta",
+        "pedantic",
+        "speech_to_text_platform_interface"
       ]
     },
     {
@@ -206,6 +221,41 @@
       ]
     },
     {
+      "name": "js",
+      "version": "0.6.7",
+      "dependencies": [
+        "meta"
+      ]
+    },
+    {
+      "name": "flutter_web_plugins",
+      "version": "0.0.0",
+      "dependencies": [
+        "flutter"
+      ]
+    },
+    {
+      "name": "pedantic",
+      "version": "1.11.1",
+      "dependencies": []
+    },
+    {
+      "name": "json_annotation",
+      "version": "4.11.0",
+      "dependencies": [
+        "meta"
+      ]
+    },
+    {
+      "name": "speech_to_text_platform_interface",
+      "version": "2.3.0",
+      "dependencies": [
+        "flutter",
+        "meta",
+        "plugin_platform_interface"
+      ]
+    },
+    {
       "name": "uuid",
       "version": "3.0.7",
       "dependencies": [
@@ -293,13 +343,6 @@
     {
       "name": "flutter_plugin_android_lifecycle",
       "version": "2.0.34",
-      "dependencies": [
-        "flutter"
-      ]
-    },
-    {
-      "name": "flutter_web_plugins",
-      "version": "0.0.0",
       "dependencies": [
         "flutter"
       ]
@@ -491,13 +534,6 @@
         "source_span",
         "string_scanner",
         "typed_data"
-      ]
-    },
-    {
-      "name": "js",
-      "version": "0.6.7",
-      "dependencies": [
-        "meta"
       ]
     },
     {

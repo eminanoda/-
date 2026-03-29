@@ -10,6 +10,8 @@
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>音声メモを録音するためにマイクの利用を許可してください。</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>録音音声を文字起こしするために音声認識を利用します。</string>
 	<key>CFBundleIdentifier</key>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
