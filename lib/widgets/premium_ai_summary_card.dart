@@ -8,9 +8,7 @@ class PremiumAiSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final displayText = summary?.trim().isNotEmpty == true
-        ? summary!
-        : '・腫れのピークは術後2日目\n・抜糸は7日後\n・費用は麻酔代込み\n・大事な予定は1週間後以降が無難';
+    final displayText = summary ?? '';
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),

@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'models/conuseling_record.dart';
 import 'widgets/premium_ai_summary_card.dart';
 
@@ -31,19 +34,6 @@ class CounselingRecordDetailScreen extends StatelessWidget {
                       '${record.doctor}  •  ${record.date}',
                       style: theme.textTheme.bodyLarge,
                     ),
-                    /*const SizedBox(height: 16),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        _DetailChip(label: record.language),
-                        _DetailChip(
-                          label: record.audioDuration == null
-                              ? '音声なし'
-                              : '録音 ${record.audioDuration}',
-                        ),
-                      ],
-                    ),*/
                   ],
                 ),
               ),
@@ -130,13 +120,85 @@ class _DetailSurface extends StatelessWidget {
   }
 }
 
-class _AudioPlaybackCard extends StatelessWidget {
+class _AudioPlaybackCard extends StatefulWidget {
   const _AudioPlaybackCard({required this.record});
 
   final CounselingRecord record;
 
   @override
+  State<_AudioPlaybackCard> createState() => _AudioPlaybackCardState();
+}
+
+class _AudioPlaybackCardState extends State<_AudioPlaybackCard> {
+  final AudioPlayer _player = AudioPlayer();
+  bool _isPlaying = false;
+  Duration _duration = Duration.zero;
+  Duration _position = Duration.zero;
+
+  bool get _hasAudioPath => widget.record.audioFilePath != null;
+  bool get _fileExists => _hasAudioPath && File(widget.record.audioFilePath!).existsSync();
+
+  @override
+  void initState() {
+    super.initState();
+    _player.onPlayerComplete.listen((_) {
+      if (!mounted) return;
+      setState(() {
+        _isPlaying = false;
+        _position = Duration.zero;
+      });
+    });
+    _player.onDurationChanged.listen((duration) {
+      if (!mounted) return;
+      setState(() {
+        _duration = duration;
+      });
+    });
+    _player.onPositionChanged.listen((position) {
+      if (!mounted) return;
+      setState(() {
+        _position = position;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _player.dispose();
+    super.dispose();
+  }
+
+  String _formatDuration(Duration duration) {
+    final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
+
+  Future<void> _togglePlayback() async {
+    final path = widget.record.audioFilePath;
+    if (path == null || !File(path).existsSync()) {
+      return;
+    }
+    if (_isPlaying) {
+      await _player.pause();
+      setState(() {
+        _isPlaying = false;
+      });
+      return;
+    }
+
+    await _player.play(DeviceFileSource(path));
+    setState(() {
+      _isPlaying = true;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final progress = _duration.inMilliseconds > 0
+        ? _position.inMilliseconds / _duration.inMilliseconds
+        : 0.0;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -154,29 +216,40 @@ class _AudioPlaybackCard extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  '' /*record.audioFileName!*/,
+                  widget.record.audioFileName ?? '音声ファイル',
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF24365F),
                   ),
                 ),
               ),
-              const Icon(CupertinoIcons.play_circle_fill, size: 28),
+              IconButton(
+                onPressed: _fileExists ? _togglePlayback : null,
+                icon: Icon(
+                  _isPlaying ? CupertinoIcons.pause_circle_fill : CupertinoIcons.play_circle_fill,
+                  size: 28,
+                  color: _fileExists ? const Color(0xFF5672D9) : const Color(0xFFB0BEC5),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 14),
           ClipRRect(
             borderRadius: BorderRadius.circular(999),
-            child: const LinearProgressIndicator(
-              value: 0.42,
+            child: LinearProgressIndicator(
+              value: progress,
               minHeight: 8,
-              backgroundColor: Color(0xFFDCE8FB),
-              valueColor: AlwaysStoppedAnimation(Color(0xFF5672D9)),
+              backgroundColor: const Color(0xFFDCE8FB),
+              valueColor: const AlwaysStoppedAnimation(Color(0xFF5672D9)),
             ),
           ),
           const SizedBox(height: 10),
           Text(
-            '00:53 / ${record.audioDuration}',
+            _fileExists
+                ? '${_formatDuration(_position)} / ${_formatDuration(_duration)}'
+                : widget.record.audioDuration != null
+                    ? '再生準備済み: ${widget.record.audioDuration}'
+                    : '再生準備中',
             style: const TextStyle(
               color: Color(0xFF61708E),
               fontWeight: FontWeight.w600,

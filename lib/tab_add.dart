@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -25,15 +26,14 @@ class CounselingRecordScreen extends StatefulWidget {
 const String _aiSummaryUrl = String.fromEnvironment('AI_SUMMARY_URL');
 
 class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
-  final _clinicController = TextEditingController(text: 'OO美容クリニック 銀座院');
-  final _doctorController = TextEditingController(text: '山田 先生');
+  final _clinicController = TextEditingController(text: '');
+  final _doctorController = TextEditingController(text: '');
   final _dateController = TextEditingController(text: '2026 / 03 / 18');
-  final _memoController = TextEditingController(
-    text: '切開位置、ダウンタイム、麻酔の種類、追加費用の説明あり。',
-  );
+  final _memoController = TextEditingController(text: '');
   String _selectedLanguage = '日本語';
   bool _showPremiumPreview = false;
   String? _audioFileName;
+  String? _audioFilePath;
   String? _audioDuration;
   String? _transcript;
   String? _aiSummary;
@@ -45,6 +45,33 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
     _dateController.dispose();
     _memoController.dispose();
     super.dispose();
+  }
+
+  DateTime? _parseDate(String text) {
+    final normalized = text.replaceAll(RegExp(r'\s+'), '').replaceAll('/', '-');
+    return DateTime.tryParse(normalized);
+  }
+
+  Future<void> _selectDate() async {
+    final initialDate = _parseDate(_dateController.text) ?? DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+      locale: const Locale('ja'),
+    );
+
+    if (picked == null) {
+      return;
+    }
+
+    setState(() {
+      _dateController.text =
+          '${picked.year.toString().padLeft(4, "0")} / '
+          '${picked.month.toString().padLeft(2, "0")} / '
+          '${picked.day.toString().padLeft(2, "0")}';
+    });
   }
 
   Future<void> _saveRecordAsJson() async {
@@ -65,6 +92,7 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
       memo: _memoController.text.trim(),
       isPremium: _showPremiumPreview,
       audioFileName: _audioFileName,
+      audioFilePath: _audioFilePath,
       audioDuration: _audioDuration,
       transcript: _transcript,
       aiSummary: aiSummary,
@@ -84,9 +112,10 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
     }
   }
 
-  void _handleRecordingCompleted(String fileName, String? duration) {
+  void _handleRecordingCompleted(String fileName, String? duration, String? path) {
     setState(() {
       _audioFileName = fileName;
+      _audioFilePath = path;
       _audioDuration = duration;
     });
   }
@@ -165,7 +194,12 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
           const SizedBox(height: 12),
           _FormField(label: '医師名', controller: _doctorController),
           const SizedBox(height: 12),
-          _FormField(label: '日付', controller: _dateController),
+          TextFormField(
+            controller: _dateController,
+            readOnly: true,
+            decoration: const InputDecoration(labelText: '日付'),
+            onTap: _selectDate,
+          ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
             initialValue: _selectedLanguage,
@@ -271,7 +305,7 @@ class _TranscribeCard extends StatefulWidget {
     required this.onTranscriptChanged,
   });
 
-  final void Function(String fileName, String? duration) onRecorded;
+  final void Function(String fileName, String? duration, String? filePath) onRecorded;
   final void Function(String transcript) onTranscriptChanged;
 
   @override
@@ -409,7 +443,7 @@ class _TranscribeCardState extends State<_TranscribeCard> {
     try {
       await _recorder.stop();
       if (_recordedFileName != null) {
-        widget.onRecorded(_recordedFileName!, _formatDuration(_recordDuration));
+        widget.onRecorded(_recordedFileName!, _formatDuration(_recordDuration), _recordedFilePath);
       }
       if (!mounted) return;
       setState(() {
@@ -488,11 +522,19 @@ class _TranscribeCardState extends State<_TranscribeCard> {
       return;
     }
 
+    final directory = await getApplicationDocumentsDirectory();
+    final savedFileName = 'picked_${DateTime.now().millisecondsSinceEpoch}_$fileName';
+    final destinationPath = '${directory.path}/$savedFileName';
+    try {
+      await File(filePath).copy(destinationPath);
+      _recordedFilePath = destinationPath;
+    } catch (_) {
+      _recordedFilePath = filePath;
+    }
     setState(() {
       _recordedFileName = fileName;
-      _recordedFilePath = filePath;
     });
-    widget.onRecorded(fileName, null);
+    widget.onRecorded(fileName, null, _recordedFilePath);
     if (!mounted) return;
 
     ScaffoldMessenger.of(

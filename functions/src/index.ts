@@ -41,7 +41,7 @@ export const summarizeTranscript = onRequest(async (request, response) => {
   }
 
 
-  const prompt = `以下の相談内容を${language}で、主要なポイントを4つ程度の箇条書きで要約してください。\n\n文字起こし:\n${transcript}\n\n要約:`;
+  const prompt = `以下の相談内容を日本語で、主要なポイントを箇条書きで要約してください。\n\n文字起こし:\n${transcript}\n\n要約:`;
 
   try {
     const accessToken = await getAccessToken();
