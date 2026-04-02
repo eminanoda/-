@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
@@ -10,7 +9,8 @@ import 'package:record/record.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
-import 'package:http/http.dart' as http;
+import 'package:firebase_ai/firebase_ai.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import 'models/conuseling_record.dart';
 import 'widgets/premium_ai_summary_card.dart';
@@ -22,8 +22,6 @@ class CounselingRecordScreen extends StatefulWidget {
   @override
   State<CounselingRecordScreen> createState() => _CounselingRecordScreenState();
 }
-
-const String _aiSummaryUrl = String.fromEnvironment('AI_SUMMARY_URL');
 
 class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
   final _clinicController = TextEditingController(text: '');
@@ -125,29 +123,25 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
   }
 
   Future<String?> _fetchAiSummary(String transcript) async {
-    if (_aiSummaryUrl.isEmpty) {
-      return null;
-    }
-
     try {
-      final response = await http.post(
-        Uri.parse(_aiSummaryUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'transcript': transcript,
-          'language': _selectedLanguage,
-        }),
-      );
-
-      if (response.statusCode != 200) {
-        return null;
+      final auth = FirebaseAuth.instance;
+      if (auth.currentUser == null) {
+        await auth.signInAnonymously();
       }
 
-      final body = jsonDecode(response.body) as Map<String, dynamic>;
-      return (body['summary'] as String?)?.trim();
+      final firebaseAI = FirebaseAI.googleAI(auth: auth);
+      final model = firebaseAI.generativeModel(model: 'gemini-1.5');
+      final prompt = _buildAiSummaryPrompt(transcript);
+      final response = await model.generateContent([Content.text(prompt)]);
+      return response.text?.trim();
     } catch (_) {
       return null;
     }
+  }
+
+  String _buildAiSummaryPrompt(String transcript) {
+    final language = _selectedLanguage == '韓国語' ? 'Korean' : 'Japanese';
+    return 'Summarize the following counseling transcript in $language:\n\n$transcript';
   }
 
   String _generateAiSummary(String text) {

@@ -1,3 +1,5 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'tab_add.dart';
@@ -5,7 +7,15 @@ import 'tab_list.dart';
 import 'tab_purchase.dart';
 import 'widgets/background_glow.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await Firebase.initializeApp();
+    await FirebaseAuth.instance.signInAnonymously();
+  } catch (_) {
+    // Firebase may not be configured in every environment.
+  }
+
   runApp(const SurgeryMemoApp());
 }
 
@@ -196,8 +206,3 @@ class _HomeShellState extends State<HomeShell> {
     );
   }
 }
-
-
-
-
-

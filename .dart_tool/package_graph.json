@@ -10,8 +10,10 @@
         "audioplayers",
         "cupertino_icons",
         "file_picker",
+        "firebase_ai",
+        "firebase_auth",
+        "firebase_core",
         "flutter",
-        "http",
         "path_provider",
         "record",
         "speech_to_text"
@@ -47,6 +49,42 @@
       ]
     },
     {
+      "name": "firebase_ai",
+      "version": "3.10.0",
+      "dependencies": [
+        "firebase_app_check",
+        "firebase_auth",
+        "firebase_core",
+        "firebase_core_platform_interface",
+        "flutter",
+        "http",
+        "meta",
+        "web_socket_channel"
+      ]
+    },
+    {
+      "name": "firebase_auth",
+      "version": "6.3.0",
+      "dependencies": [
+        "firebase_auth_platform_interface",
+        "firebase_auth_web",
+        "firebase_core",
+        "firebase_core_platform_interface",
+        "flutter",
+        "meta"
+      ]
+    },
+    {
+      "name": "firebase_core",
+      "version": "4.6.0",
+      "dependencies": [
+        "firebase_core_platform_interface",
+        "firebase_core_web",
+        "flutter",
+        "meta"
+      ]
+    },
+    {
       "name": "speech_to_text",
       "version": "5.6.1",
       "dependencies": [
@@ -61,17 +99,8 @@
       ]
     },
     {
-      "name": "http",
-      "version": "0.13.6",
-      "dependencies": [
-        "async",
-        "http_parser",
-        "meta"
-      ]
-    },
-    {
       "name": "audioplayers",
-      "version": "3.0.1",
+      "version": "6.6.0",
       "dependencies": [
         "audioplayers_android",
         "audioplayers_darwin",
@@ -79,9 +108,12 @@
         "audioplayers_platform_interface",
         "audioplayers_web",
         "audioplayers_windows",
+        "file",
         "flutter",
         "http",
+        "meta",
         "path_provider",
+        "synchronized",
         "uuid"
       ]
     },
@@ -231,6 +263,87 @@
       ]
     },
     {
+      "name": "web_socket_channel",
+      "version": "3.0.3",
+      "dependencies": [
+        "async",
+        "crypto",
+        "stream_channel",
+        "web",
+        "web_socket"
+      ]
+    },
+    {
+      "name": "http",
+      "version": "1.6.0",
+      "dependencies": [
+        "async",
+        "http_parser",
+        "meta",
+        "web"
+      ]
+    },
+    {
+      "name": "firebase_core_platform_interface",
+      "version": "6.0.3",
+      "dependencies": [
+        "collection",
+        "flutter",
+        "flutter_test",
+        "meta",
+        "plugin_platform_interface"
+      ]
+    },
+    {
+      "name": "firebase_app_check",
+      "version": "0.4.2",
+      "dependencies": [
+        "firebase_app_check_platform_interface",
+        "firebase_app_check_web",
+        "firebase_core",
+        "firebase_core_platform_interface",
+        "flutter"
+      ]
+    },
+    {
+      "name": "firebase_auth_web",
+      "version": "6.1.4",
+      "dependencies": [
+        "firebase_auth_platform_interface",
+        "firebase_core",
+        "firebase_core_web",
+        "flutter",
+        "flutter_web_plugins",
+        "http_parser",
+        "meta",
+        "web"
+      ]
+    },
+    {
+      "name": "firebase_auth_platform_interface",
+      "version": "8.1.8",
+      "dependencies": [
+        "_flutterfire_internals",
+        "collection",
+        "firebase_core",
+        "flutter",
+        "http",
+        "meta",
+        "plugin_platform_interface"
+      ]
+    },
+    {
+      "name": "firebase_core_web",
+      "version": "3.5.1",
+      "dependencies": [
+        "firebase_core_platform_interface",
+        "flutter",
+        "flutter_web_plugins",
+        "meta",
+        "web"
+      ]
+    },
+    {
       "name": "js",
       "version": "0.6.7",
       "dependencies": [
@@ -266,24 +379,6 @@
       ]
     },
     {
-      "name": "http_parser",
-      "version": "4.1.2",
-      "dependencies": [
-        "collection",
-        "source_span",
-        "string_scanner",
-        "typed_data"
-      ]
-    },
-    {
-      "name": "async",
-      "version": "2.13.0",
-      "dependencies": [
-        "collection",
-        "meta"
-      ]
-    },
-    {
       "name": "uuid",
       "version": "3.0.7",
       "dependencies": [
@@ -291,8 +386,21 @@
       ]
     },
     {
+      "name": "synchronized",
+      "version": "3.4.0",
+      "dependencies": []
+    },
+    {
+      "name": "file",
+      "version": "7.0.1",
+      "dependencies": [
+        "meta",
+        "path"
+      ]
+    },
+    {
       "name": "audioplayers_windows",
-      "version": "1.1.3",
+      "version": "4.3.0",
       "dependencies": [
         "audioplayers_platform_interface",
         "flutter"
@@ -300,25 +408,27 @@
     },
     {
       "name": "audioplayers_web",
-      "version": "2.2.0",
+      "version": "5.2.0",
       "dependencies": [
         "audioplayers_platform_interface",
         "flutter",
         "flutter_web_plugins",
-        "js"
+        "web"
       ]
     },
     {
       "name": "audioplayers_platform_interface",
-      "version": "4.0.0",
+      "version": "7.1.1",
       "dependencies": [
+        "collection",
         "flutter",
+        "meta",
         "plugin_platform_interface"
       ]
     },
     {
       "name": "audioplayers_linux",
-      "version": "1.0.4",
+      "version": "4.2.1",
       "dependencies": [
         "audioplayers_platform_interface",
         "flutter"
@@ -326,7 +436,7 @@
     },
     {
       "name": "audioplayers_darwin",
-      "version": "3.0.1",
+      "version": "6.4.0",
       "dependencies": [
         "audioplayers_platform_interface",
         "flutter"
@@ -334,7 +444,7 @@
     },
     {
       "name": "audioplayers_android",
-      "version": "2.0.0",
+      "version": "5.2.1",
       "dependencies": [
         "audioplayers_platform_interface",
         "flutter"
@@ -482,6 +592,14 @@
       "dependencies": []
     },
     {
+      "name": "async",
+      "version": "2.13.0",
+      "dependencies": [
+        "collection",
+        "meta"
+      ]
+    },
+    {
       "name": "leak_tracker_testing",
       "version": "3.0.2",
       "dependencies": [
@@ -531,11 +649,16 @@
       ]
     },
     {
-      "name": "typed_data",
-      "version": "1.4.0",
+      "name": "web_socket",
+      "version": "1.0.1",
       "dependencies": [
-        "collection"
+        "web"
       ]
+    },
+    {
+      "name": "web",
+      "version": "1.1.1",
+      "dependencies": []
     },
     {
       "name": "crypto",
@@ -545,9 +668,49 @@
       ]
     },
     {
-      "name": "web",
-      "version": "1.1.1",
-      "dependencies": []
+      "name": "http_parser",
+      "version": "4.1.2",
+      "dependencies": [
+        "collection",
+        "source_span",
+        "string_scanner",
+        "typed_data"
+      ]
+    },
+    {
+      "name": "firebase_app_check_web",
+      "version": "0.2.3",
+      "dependencies": [
+        "_flutterfire_internals",
+        "firebase_app_check_platform_interface",
+        "firebase_core",
+        "firebase_core_web",
+        "flutter",
+        "flutter_web_plugins",
+        "web"
+      ]
+    },
+    {
+      "name": "firebase_app_check_platform_interface",
+      "version": "0.2.2",
+      "dependencies": [
+        "_flutterfire_internals",
+        "firebase_core",
+        "flutter",
+        "meta",
+        "plugin_platform_interface"
+      ]
+    },
+    {
+      "name": "_flutterfire_internals",
+      "version": "1.3.68",
+      "dependencies": [
+        "collection",
+        "firebase_core",
+        "firebase_core_platform_interface",
+        "flutter",
+        "meta"
+      ]
     },
     {
       "name": "platform",
@@ -579,6 +742,13 @@
       "name": "vm_service",
       "version": "15.0.2",
       "dependencies": []
+    },
+    {
+      "name": "typed_data",
+      "version": "1.4.0",
+      "dependencies": [
+        "collection"
+      ]
     },
     {
       "name": "pub_semver",
@@ -642,14 +812,6 @@
         "collection",
         "source_span",
         "string_scanner"
-      ]
-    },
-    {
-      "name": "file",
-      "version": "7.0.1",
-      "dependencies": [
-        "meta",
-        "path"
       ]
     }
   ],
