@@ -312,13 +312,14 @@ class _TranscribeCard extends StatefulWidget {
 }
 
 class _TranscribeCardState extends State<_TranscribeCard> {
-  final AudioRecorder _recorder = AudioRecorder();
+  final Record _recorder = Record();
   final AudioPlayer _player = AudioPlayer();
   final SpeechToText _speechToText = SpeechToText();
   final TextEditingController _transcriptController = TextEditingController();
   bool _isRecording = false;
   bool _isPlaying = false;
   bool _isListening = false;
+  bool _transcriptionPlayback = false;
   bool _speechAvailable = false;
   double _audioLevel = 0;
   Duration _recordDuration = Duration.zero;
@@ -332,11 +333,15 @@ class _TranscribeCardState extends State<_TranscribeCard> {
   @override
   void initState() {
     super.initState();
-    _player.onPlayerComplete.listen((_) {
+    _player.onPlayerComplete.listen((_) async {
       if (!mounted) return;
       setState(() {
         _isPlaying = false;
       });
+      if (_transcriptionPlayback) {
+        _transcriptionPlayback = false;
+        await _stopListening();
+      }
     });
     _transcriptController.addListener(() {
       if (!mounted) return;
@@ -393,12 +398,9 @@ class _TranscribeCardState extends State<_TranscribeCard> {
 
     try {
       await _recorder.start(
-        const RecordConfig(
-          encoder: AudioEncoder.aacLc,
-          bitRate: 128000,
-          sampleRate: 44100,
-        ),
         path: path,
+        encoder: AudioEncoder.aacLc,
+        bitRate: 128000,
       );
       _recordedFilePath = path;
       _meterTimer?.cancel();
@@ -481,6 +483,18 @@ class _TranscribeCardState extends State<_TranscribeCard> {
       return;
     }
 
+    if (_recordedFilePath != null) {
+      try {
+        await _player.play(DeviceFileSource(_recordedFilePath!));
+        _transcriptionPlayback = true;
+        setState(() {
+          _isPlaying = true;
+        });
+      } catch (_) {
+        _transcriptionPlayback = false;
+      }
+    }
+
     await _speechToText.listen(
       onResult: _onSpeechResult,
       localeId: _selectedLanguage == '日本語' ? 'ja_JP' : 'ko_KR',
@@ -495,6 +509,11 @@ class _TranscribeCardState extends State<_TranscribeCard> {
 
   Future<void> _stopListening() async {
     await _speechToText.stop();
+    if (_transcriptionPlayback) {
+      _transcriptionPlayback = false;
+      await _player.pause();
+      _isPlaying = false;
+    }
     if (!mounted) return;
     setState(() {
       _isListening = false;
@@ -635,7 +654,7 @@ class _TranscribeCardState extends State<_TranscribeCard> {
                           _isRecording
                               ? '録音中 $_durationText'
                               : _recordedFileName != null
-                              ? '追加済み: ${_recordedFileName!}'
+                              ? '${_durationText}'
                               : '準備完了',
                           style: const TextStyle(
                             fontWeight: FontWeight.w700,
@@ -696,6 +715,12 @@ class _TranscribeCardState extends State<_TranscribeCard> {
                 ),
               ],
             ),
+            const SizedBox(height: 14),
+            if (_recordedFilePath != null)
+              const Text(
+                '保存済み音声ファイルは再生しながら文字起こしします。',
+                style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+              ),
             const SizedBox(height: 14),
             _FormField(
               label: '文字起こし結果',
