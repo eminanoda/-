@@ -412,12 +412,16 @@ class _TranscribeCardState extends State<_TranscribeCard> {
         _durationText = '00:00';
       });
 
+      if (_speechAvailable) {
+        await _startListening(forRecording: true);
+      }
+
       _meterTimer = Timer.periodic(const Duration(milliseconds: 100), (
         _,
       ) async {
         if (!mounted || !_isRecording) return;
         final amplitude = await _recorder.getAmplitude();
-        final normalized = (amplitude.current / 120).clamp(0.0, 1.0);
+        final normalized = ((amplitude.current + 120) / 120).clamp(0.0, 1.0);
         setState(() {
           _audioLevel = normalized;
         });
@@ -450,6 +454,9 @@ class _TranscribeCardState extends State<_TranscribeCard> {
           _recordedFilePath,
         );
       }
+      if (_isListening) {
+        await _stopListening();
+      }
       if (!mounted) return;
       setState(() {
         _isRecording = false;
@@ -466,15 +473,7 @@ class _TranscribeCardState extends State<_TranscribeCard> {
     }
   }
 
-  Future<void> _toggleListening() async {
-    if (_isListening) {
-      await _stopListening();
-    } else {
-      await _startListening();
-    }
-  }
-
-  Future<void> _startListening() async {
+  Future<void> _startListening({required bool forRecording}) async {
     if (!_speechAvailable) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -483,7 +482,7 @@ class _TranscribeCardState extends State<_TranscribeCard> {
       return;
     }
 
-    if (_recordedFilePath != null) {
+    if (!forRecording && _recordedFilePath != null) {
       try {
         await _player.play(DeviceFileSource(_recordedFilePath!));
         _transcriptionPlayback = true;
@@ -499,7 +498,7 @@ class _TranscribeCardState extends State<_TranscribeCard> {
       onResult: _onSpeechResult,
       localeId: _selectedLanguage == '日本語' ? 'ja_JP' : 'ko_KR',
       listenMode: ListenMode.dictation,
-      partialResults: true,
+      listenOptions: SpeechListenOptions(partialResults: true),
     );
     if (!mounted) return;
     setState(() {
@@ -512,7 +511,9 @@ class _TranscribeCardState extends State<_TranscribeCard> {
     if (_transcriptionPlayback) {
       _transcriptionPlayback = false;
       await _player.pause();
-      _isPlaying = false;
+      setState(() {
+        _isPlaying = false;
+      });
     }
     if (!mounted) return;
     setState(() {
@@ -563,6 +564,10 @@ class _TranscribeCardState extends State<_TranscribeCard> {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text('音声ファイルを追加しました: $fileName')));
+
+    if (_speechAvailable) {
+      await _startListening(forRecording: false);
+    }
   }
 
   Future<void> _togglePlayback() async {
@@ -599,6 +604,27 @@ class _TranscribeCardState extends State<_TranscribeCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Row(
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    initialValue: _selectedLanguage,
+                    items: const [
+                      DropdownMenuItem(value: '日本語', child: Text('日本語')),
+                      DropdownMenuItem(value: '韓国語', child: Text('韓国語')),
+                    ],
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setState(() {
+                        _selectedLanguage = value;
+                      });
+                    },
+                    decoration: const InputDecoration(labelText: '文字起こし言語'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
             Row(
               children: [
                 Expanded(
@@ -683,42 +709,9 @@ class _TranscribeCardState extends State<_TranscribeCard> {
               ),
             ),
             const SizedBox(height: 14),
-            Row(
-              children: [
-                Expanded(
-                  child: FilledButton.icon(
-                    onPressed: _speechAvailable ? _toggleListening : null,
-                    icon: Icon(
-                      _isListening
-                          ? CupertinoIcons.stop_fill
-                          : CupertinoIcons.mic_fill,
-                    ),
-                    label: Text(_isListening ? '停止して保存' : '文字起こし開始'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    initialValue: _selectedLanguage,
-                    items: const [
-                      DropdownMenuItem(value: '日本語', child: Text('日本語')),
-                      DropdownMenuItem(value: '韓国語', child: Text('韓国語')),
-                    ],
-                    onChanged: (value) {
-                      if (value == null) return;
-                      setState(() {
-                        _selectedLanguage = value;
-                      });
-                    },
-                    decoration: const InputDecoration(labelText: '文字起こし言語'),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            if (_recordedFilePath != null)
+            if (_isRecording)
               const Text(
-                '保存済み音声ファイルは再生しながら文字起こしします。',
+                '録音中は自動的に文字起こしされます。',
                 style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
               ),
             const SizedBox(height: 14),
@@ -727,8 +720,6 @@ class _TranscribeCardState extends State<_TranscribeCard> {
               maxLines: 6,
               controller: _transcriptController,
             ),
-            const SizedBox(height: 14),
-            const PremiumAiSummaryCard(),
           ],
         ),
       ),
