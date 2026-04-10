@@ -529,7 +529,10 @@ class _TranscribeCardState extends State<_TranscribeCard> {
   }
 
   Future<void> _pickAudioFile() async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.audio);
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['mp3', 'm4a', 'wav', 'aac', 'flac', 'ogg', 'wma'],
+    );
     if (result == null || result.files.isEmpty) {
       return;
     }
