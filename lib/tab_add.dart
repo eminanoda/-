@@ -127,20 +127,20 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
 
   Future<String?> _fetchAiSummary(String transcript) async {
     try {
-      print('_fetchAiSummary $transcript');
+      debugPrint('_fetchAiSummary $transcript');
       final auth = FirebaseAuth.instance;
       if (auth.currentUser == null) {
         await auth.signInAnonymously();
       }
 
       final firebaseAI = FirebaseAI.googleAI(auth: auth);
-      final model = firebaseAI.generativeModel(model: 'gemini-1.5');
+      final model = firebaseAI.generativeModel(model: 'gemini-3-flash-preview');
       final prompt = _buildAiSummaryPrompt(transcript);
       final response = await model.generateContent([Content.text(prompt)]);
-      print('_fetchAiSummary.response ${response.text}');
+      debugPrint('_fetchAiSummary.response ${response.text}');
       return response.text?.trim();
     } catch (e) {
-      print('_fetchAiSummary.e $e');
+      debugPrint('_fetchAiSummary.e $e');
       return null;
     }
   }
@@ -565,7 +565,7 @@ class _TranscribeCardState extends State<_TranscribeCard> {
       }
     } catch (e) {
       if (!mounted) return null;
-      print('eee $e');
+      debugPrint('eee $e');
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('文字起こしに失敗しました: $e')));
@@ -745,7 +745,7 @@ class _TranscribeCardState extends State<_TranscribeCard> {
                           _isRecording
                               ? '録音中 $_durationText'
                               : _recordedFileName != null
-                              ? '${_durationText}'
+                              ? _durationText
                               : '準備完了',
                           style: const TextStyle(
                             fontWeight: FontWeight.w700,
@@ -784,7 +784,7 @@ class _TranscribeCardState extends State<_TranscribeCard> {
               label: '文字起こし結果',
               maxLines: 6,
               controller: _transcriptController,
-              readOnly: _isRecording || _isTranscribing,
+              readOnly: _isTranscribing,
             ),
           ],
         ),
