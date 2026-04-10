@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +12,7 @@ import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:firebase_ai/firebase_ai.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:http/http.dart' as http;
 
 import 'models/conuseling_record.dart';
 import 'widgets/premium_ai_summary_card.dart';
@@ -73,14 +75,15 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
   }
 
   Future<void> _saveRecordAsJson() async {
-    String? aiSummary;
-    if (_transcript != null && _transcript!.trim().isNotEmpty) {
+    String? aiSummary = _aiSummary;
+    if (aiSummary == null &&
+        _transcript != null &&
+        _transcript!.trim().isNotEmpty) {
       aiSummary = await _fetchAiSummary(_transcript!);
-      aiSummary ??= _generateAiSummary(_transcript!);
+      setState(() {
+        _aiSummary = aiSummary;
+      });
     }
-    setState(() {
-      _aiSummary = aiSummary;
-    });
 
     final record = CounselingRecord(
       clinic: _clinicController.text.trim(),
@@ -124,6 +127,7 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
 
   Future<String?> _fetchAiSummary(String transcript) async {
     try {
+      print('_fetchAiSummary $transcript');
       final auth = FirebaseAuth.instance;
       if (auth.currentUser == null) {
         await auth.signInAnonymously();
@@ -133,8 +137,10 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
       final model = firebaseAI.generativeModel(model: 'gemini-1.5');
       final prompt = _buildAiSummaryPrompt(transcript);
       final response = await model.generateContent([Content.text(prompt)]);
+      print('_fetchAiSummary.response ${response.text}');
       return response.text?.trim();
-    } catch (_) {
+    } catch (e) {
+      print('_fetchAiSummary.e $e');
       return null;
     }
   }
@@ -144,34 +150,19 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
     return 'Summarize the following counseling transcript in $language:\n\n$transcript';
   }
 
-  String _generateAiSummary(String text) {
-    final cleaned = text.trim();
-    if (cleaned.isEmpty) {
-      return '';
+  void _generateAiSummaryNow(String transcript) async {
+    if (transcript.trim().isEmpty) {
+      setState(() {
+        _aiSummary = null;
+      });
+      return;
     }
-
-    final sentenceCandidates = cleaned
-        .split(RegExp(r'[。！？\n]+'))
-        .map((segment) => segment.trim())
-        .where((segment) => segment.isNotEmpty)
-        .toList();
-    if (sentenceCandidates.isEmpty) {
-      return cleaned.length <= 120 ? cleaned : '${cleaned.substring(0, 120)}…';
+    final summary = await _fetchAiSummary(transcript);
+    if (mounted) {
+      setState(() {
+        _aiSummary = summary;
+      });
     }
-
-    final bullets = <String>[];
-    for (final sentence in sentenceCandidates) {
-      if (bullets.length >= 4) break;
-      final item =
-          sentence.endsWith('。') ||
-              sentence.endsWith('！') ||
-              sentence.endsWith('？')
-          ? sentence
-          : '$sentence。';
-      bullets.add(item);
-    }
-
-    return bullets.join('\n');
   }
 
   @override
@@ -231,13 +222,23 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
           ] else ...[
             _TranscribeCard(
               onRecorded: _handleRecordingCompleted,
-              onTranscriptChanged: (transcript) => setState(() {
-                _transcript = transcript;
-              }),
+              onTranscriptChanged: (transcript) {
+                setState(() {
+                  _transcript = transcript;
+                });
+              },
+              onTranscriptionCompleted: _generateAiSummaryNow,
             ),
             if (_aiSummary != null) ...[
               const SizedBox(height: 14),
               PremiumAiSummaryCard(summary: _aiSummary),
+            ] else if (_transcript != null &&
+                _transcript!.trim().isNotEmpty) ...[
+              const SizedBox(height: 14),
+              FilledButton(
+                onPressed: () => _generateAiSummaryNow(_transcript!),
+                child: const Text('AI要約を作成'),
+              ),
             ],
           ],
           const SizedBox(height: 20),
@@ -269,11 +270,17 @@ class _SectionTitle extends StatelessWidget {
 }
 
 class _FormField extends StatelessWidget {
-  const _FormField({required this.label, this.controller, this.maxLines = 1});
+  const _FormField({
+    required this.label,
+    this.controller,
+    this.maxLines = 1,
+    this.readOnly = false,
+  });
 
   final String label;
   final TextEditingController? controller;
   final int maxLines;
+  final bool readOnly;
 
   @override
   Widget build(BuildContext context) {
@@ -291,6 +298,7 @@ class _FormField extends StatelessWidget {
           controller: controller,
           initialValue: controller == null ? '' : null,
           maxLines: maxLines,
+          readOnly: readOnly,
         ),
       ],
     );
@@ -301,11 +309,13 @@ class _TranscribeCard extends StatefulWidget {
   const _TranscribeCard({
     required this.onRecorded,
     required this.onTranscriptChanged,
+    required this.onTranscriptionCompleted,
   });
 
   final void Function(String fileName, String? duration, String? filePath)
   onRecorded;
   final void Function(String transcript) onTranscriptChanged;
+  final void Function(String transcript) onTranscriptionCompleted;
 
   @override
   State<_TranscribeCard> createState() => _TranscribeCardState();
@@ -319,6 +329,7 @@ class _TranscribeCardState extends State<_TranscribeCard> {
   bool _isRecording = false;
   bool _isPlaying = false;
   bool _isListening = false;
+  bool _isTranscribing = false;
   bool _transcriptionPlayback = false;
   bool _speechAvailable = false;
   double _audioLevel = 0;
@@ -329,6 +340,10 @@ class _TranscribeCardState extends State<_TranscribeCard> {
   String _selectedLanguage = '日本語';
   Timer? _meterTimer;
   Timer? _durationTimer;
+
+  // Firebase Functions URL for speech-to-text service
+  static const String cloudRunUrl =
+      'https://transcribeaudio-4u32ph45oa-uc.a.run.app';
 
   @override
   void initState() {
@@ -465,6 +480,10 @@ class _TranscribeCardState extends State<_TranscribeCard> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('録音を停止しました')));
+      // Generate AI summary after recording stops
+      if (_transcriptController.text.trim().isNotEmpty) {
+        widget.onTranscriptionCompleted(_transcriptController.text);
+      }
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -503,6 +522,7 @@ class _TranscribeCardState extends State<_TranscribeCard> {
     if (!mounted) return;
     setState(() {
       _isListening = true;
+      _isTranscribing = true;
     });
   }
 
@@ -518,6 +538,7 @@ class _TranscribeCardState extends State<_TranscribeCard> {
     if (!mounted) return;
     setState(() {
       _isListening = false;
+      _isTranscribing = false;
     });
   }
 
@@ -528,10 +549,34 @@ class _TranscribeCardState extends State<_TranscribeCard> {
     });
   }
 
+  Future<String?> _transcribeAudioFile(String filePath, String language) async {
+    try {
+      final request = http.MultipartRequest('POST', Uri.parse(cloudRunUrl));
+      request.files.add(await http.MultipartFile.fromPath('audio', filePath));
+      request.fields['language'] = language == '日本語' ? 'ja-JP' : 'ko-KR';
+
+      final response = await request.send();
+      if (response.statusCode == 200) {
+        final responseBody = await response.stream.bytesToString();
+        final jsonResponse = json.decode(responseBody);
+        return jsonResponse['transcript'];
+      } else {
+        throw Exception('Failed to transcribe: ${response.statusCode}');
+      }
+    } catch (e) {
+      if (!mounted) return null;
+      print('eee $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('文字起こしに失敗しました: $e')));
+      return null;
+    }
+  }
+
   Future<void> _pickAudioFile() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: ['mp3', 'm4a', 'wav', 'aac', 'flac', 'ogg', 'wma'],
+      allowedExtensions: ['mp3', 'wav', 'flac', 'ogg'],
     );
     if (result == null || result.files.isEmpty) {
       return;
@@ -568,8 +613,25 @@ class _TranscribeCardState extends State<_TranscribeCard> {
       context,
     ).showSnackBar(SnackBar(content: Text('音声ファイルを追加しました: $fileName')));
 
-    if (_speechAvailable) {
-      await _startListening(forRecording: false);
+    // Transcribe using Cloud Run
+    setState(() {
+      _isTranscribing = true;
+    });
+    final transcript = await _transcribeAudioFile(
+      _recordedFilePath!,
+      _selectedLanguage,
+    );
+    if (!mounted) return;
+    setState(() {
+      _isTranscribing = false;
+    });
+
+    if (transcript != null) {
+      setState(() {
+        _transcriptController.text = transcript;
+      });
+      // Generate AI summary after transcription completes
+      widget.onTranscriptionCompleted(transcript);
     }
   }
 
@@ -722,6 +784,7 @@ class _TranscribeCardState extends State<_TranscribeCard> {
               label: '文字起こし結果',
               maxLines: 6,
               controller: _transcriptController,
+              readOnly: _isRecording || _isTranscribing,
             ),
           ],
         ),

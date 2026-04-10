@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "514630778460",
+    "project_id": "surgery-counselling-memo",
+    "storage_bucket": "surgery-counselling-memo.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:514630778460:android:6acccb1da60aea1984b099",
+        "android_client_info": {
+          "package_name": "com.example.surgery_memo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD1K182tYI39fwohPhs3hAmRv8yzkMQky0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
