@@ -1,10 +1,7 @@
-import 'package:firebase_app_check/firebase_app_check.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'firebase_options.dart';
+import 'package:surgery_memo/firebase_options.dart';
 import 'tab_add.dart';
 import 'tab_list.dart';
 import 'tab_purchase.dart';
@@ -19,19 +16,6 @@ Future<void> main() async {
     );
   } catch (e) {
     debugPrint('Firebase error $e');
-  }
-  try {
-    await FirebaseAppCheck.instance.activate(
-      providerAndroid: kReleaseMode
-          ? AndroidPlayIntegrityProvider()
-          : const AndroidDebugProvider(),
-      providerApple: kReleaseMode
-          ? AppleDeviceCheckProvider()
-          : const AppleDebugProvider(),
-    );
-    await FirebaseAuth.instance.signInAnonymously();
-  } catch (e) {
-    debugPrint('FirebaseAppCheck error $e');
   }
 
   runApp(const SurgeryMemoApp());
@@ -167,7 +151,13 @@ class _HomeShellState extends State<HomeShell> {
   Widget build(BuildContext context) {
     final screens = [
       const RecordsListScreen(),
-      const CounselingRecordScreen(),
+      CounselingRecordScreen(
+        onSaved: () {
+          setState(() {
+            _index = 0;
+          });
+        },
+      ),
       const PurchaseScreen(),
     ];
 

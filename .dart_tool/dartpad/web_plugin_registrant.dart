@@ -8,7 +8,6 @@
 
 import 'package:audioplayers_web/audioplayers_web.dart';
 import 'package:file_picker/_internal/file_picker_web.dart';
-import 'package:firebase_app_check_web/firebase_app_check_web.dart';
 import 'package:firebase_auth_web/firebase_auth_web.dart';
 import 'package:firebase_core_web/firebase_core_web.dart';
 import 'package:record_web/record_web.dart';
@@ -19,7 +18,6 @@ void registerPlugins([final Registrar? pluginRegistrar]) {
   final Registrar registrar = pluginRegistrar ?? webPluginRegistrar;
   AudioplayersPlugin.registerWith(registrar);
   FilePickerWeb.registerWith(registrar);
-  FirebaseAppCheckWeb.registerWith(registrar);
   FirebaseAuthWeb.registerWith(registrar);
   FirebaseCoreWeb.registerWith(registrar);
   RecordPluginWeb.registerWith(registrar);

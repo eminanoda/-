@@ -105,3 +105,26 @@ Future<void> addCounselingRecord(CounselingRecord record) async {
   await saveCounselingRecords(records);
   counselingRecordsNotifier.value = records;
 }
+
+Future<void> updateCounselingRecordAt(
+  int index,
+  CounselingRecord updatedRecord,
+) async {
+  final records = await loadCounselingRecords();
+  if (index < 0 || index >= records.length) {
+    throw RangeError.index(index, records, 'index');
+  }
+  records[index] = updatedRecord;
+  await saveCounselingRecords(records);
+  counselingRecordsNotifier.value = records;
+}
+
+Future<void> deleteCounselingRecordAt(int index) async {
+  final records = await loadCounselingRecords();
+  if (index < 0 || index >= records.length) {
+    throw RangeError.index(index, records, 'index');
+  }
+  records.removeAt(index);
+  await saveCounselingRecords(records);
+  counselingRecordsNotifier.value = records;
+}

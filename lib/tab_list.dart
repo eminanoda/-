@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'counseling_record_detail.dart';
 import 'models/conuseling_record.dart';
+import 'tab_add.dart';
 
 enum RecordSortOrder { newest, oldest }
 
@@ -14,6 +15,84 @@ class RecordsListScreen extends StatefulWidget {
 
 class _RecordsListScreenState extends State<RecordsListScreen> {
   RecordSortOrder _sortOrder = RecordSortOrder.newest;
+
+  Future<void> _openEditScreen(
+    BuildContext context,
+    CounselingRecord record,
+    int recordIndex,
+  ) async {
+    if (recordIndex < 0) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('編集対象の記録が見つかりませんでした')));
+      return;
+    }
+
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => Scaffold(
+          appBar: AppBar(title: const Text('記録を編集')),
+          body: CounselingRecordScreen(
+            initialRecord: record,
+            editingIndex: recordIndex,
+            onSaved: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _deleteRecord(
+    BuildContext context,
+    CounselingRecord record,
+    int recordIndex,
+  ) async {
+    if (recordIndex < 0) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('削除対象の記録が見つかりませんでした')));
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('記録を削除'),
+        content: Text('「${record.clinic}」の記録を削除しますか？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton.tonal(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('削除'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) {
+      return;
+    }
+
+    try {
+      await deleteCounselingRecordAt(recordIndex);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('削除しました')));
+    } catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('削除に失敗しました: $error')));
+    }
+  }
 
   @override
   void initState() {
@@ -93,6 +172,7 @@ class _RecordsListScreenState extends State<RecordsListScreen> {
                 separatorBuilder: (_, _) => const SizedBox(height: 14),
                 itemBuilder: (context, index) {
                   final record = sortedRecords[index];
+                  final recordIndex = records.indexOf(record);
                   return _RecordCard(
                     record: record,
                     onTap: () {
@@ -103,6 +183,8 @@ class _RecordsListScreenState extends State<RecordsListScreen> {
                         ),
                       );
                     },
+                    onEdit: () => _openEditScreen(context, record, recordIndex),
+                    onDelete: () => _deleteRecord(context, record, recordIndex),
                   );
                 },
               ),
@@ -115,10 +197,17 @@ class _RecordsListScreenState extends State<RecordsListScreen> {
 }
 
 class _RecordCard extends StatelessWidget {
-  const _RecordCard({required this.record, required this.onTap});
+  const _RecordCard({
+    required this.record,
+    required this.onTap,
+    required this.onEdit,
+    required this.onDelete,
+  });
 
   final CounselingRecord record;
   final VoidCallback onTap;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -164,7 +253,7 @@ class _RecordCard extends StatelessWidget {
                   Expanded(
                     flex: 2,
                     child: OutlinedButton.icon(
-                      onPressed: () {},
+                      onPressed: onEdit,
                       icon: const Icon(CupertinoIcons.pencil),
                       label: const Text('編集'),
                       style: OutlinedButton.styleFrom(
@@ -180,7 +269,7 @@ class _RecordCard extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: FilledButton.tonalIcon(
-                      onPressed: () {},
+                      onPressed: onDelete,
                       icon: const Icon(CupertinoIcons.delete),
                       label: const Text('削除'),
                       style: FilledButton.styleFrom(

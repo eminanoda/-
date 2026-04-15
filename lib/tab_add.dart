@@ -10,8 +10,6 @@ import 'package:record/record.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
-import 'package:firebase_ai/firebase_ai.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 
 import 'models/conuseling_record.dart';
@@ -19,24 +17,65 @@ import 'widgets/premium_ai_summary_card.dart';
 import 'widgets/premium_feature_card.dart';
 
 class CounselingRecordScreen extends StatefulWidget {
-  const CounselingRecordScreen({super.key});
+  const CounselingRecordScreen({
+    super.key,
+    this.onSaved,
+    this.initialRecord,
+    this.editingIndex,
+  });
+
+  final VoidCallback? onSaved;
+  final CounselingRecord? initialRecord;
+  final int? editingIndex;
+
+  bool get isEditing => initialRecord != null && editingIndex != null;
 
   @override
   State<CounselingRecordScreen> createState() => _CounselingRecordScreenState();
 }
 
 class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
-  final _clinicController = TextEditingController(text: '');
-  final _doctorController = TextEditingController(text: '');
-  final _dateController = TextEditingController(text: '2026 / 03 / 18');
-  final _memoController = TextEditingController(text: '');
-  String _selectedLanguage = '日本語';
-  bool _showPremiumPreview = false;
+  static final Uri _summaryFunctionUri = Uri.parse(
+    const String.fromEnvironment(
+      'AI_SUMMARY_URL',
+      defaultValue:
+          'https://us-central1-surgery-counselling-memo.cloudfunctions.net/summarizeCounseling',
+    ),
+  );
+
+  late final TextEditingController _clinicController;
+  late final TextEditingController _doctorController;
+  late final TextEditingController _dateController;
+  late final TextEditingController _memoController;
+  late String _selectedLanguage;
+  late bool _showPremiumPreview;
   String? _audioFileName;
   String? _audioFilePath;
   String? _audioDuration;
   String? _transcript;
   String? _aiSummary;
+  bool _isFetchingAiSummary = false;
+  bool _canStartTranscription = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final initialRecord = widget.initialRecord;
+    _clinicController = TextEditingController(text: initialRecord?.clinic ?? '');
+    _doctorController = TextEditingController(text: initialRecord?.doctor ?? '');
+    _dateController = TextEditingController(
+      text: initialRecord?.date ?? '2026 / 03 / 18',
+    );
+    _memoController = TextEditingController(text: initialRecord?.memo ?? '');
+    _selectedLanguage = initialRecord?.language ?? '日本語';
+    _showPremiumPreview = initialRecord?.isPremium ?? false;
+    _audioFileName = initialRecord?.audioFileName;
+    _audioFilePath = initialRecord?.audioFilePath;
+    _audioDuration = initialRecord?.audioDuration;
+    _transcript = initialRecord?.transcript;
+    _aiSummary = initialRecord?.aiSummary;
+    _canStartTranscription = _transcript?.trim().isNotEmpty ?? false;
+  }
 
   @override
   void dispose() {
@@ -79,10 +118,18 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
     if (aiSummary == null &&
         _transcript != null &&
         _transcript!.trim().isNotEmpty) {
+      if (mounted) {
+        setState(() {
+          _isFetchingAiSummary = true;
+        });
+      }
       aiSummary = await _fetchAiSummary(_transcript!);
-      setState(() {
-        _aiSummary = aiSummary;
-      });
+      if (mounted) {
+        setState(() {
+          _aiSummary = aiSummary;
+          _isFetchingAiSummary = false;
+        });
+      }
     }
 
     final record = CounselingRecord(
@@ -100,11 +147,18 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
     );
 
     try {
-      await addCounselingRecord(record);
+      if (widget.isEditing) {
+        await updateCounselingRecordAt(widget.editingIndex!, record);
+      } else {
+        await addCounselingRecord(record);
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('保存しました')));
+      ).showSnackBar(
+        SnackBar(content: Text(widget.isEditing ? '更新しました' : '保存しました')),
+      );
+      widget.onSaved?.call();
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -128,26 +182,34 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
   Future<String?> _fetchAiSummary(String transcript) async {
     try {
       debugPrint('_fetchAiSummary $transcript');
-      final auth = FirebaseAuth.instance;
-      if (auth.currentUser == null) {
-        await auth.signInAnonymously();
+      final response = await http.post(
+        _summaryFunctionUri,
+        headers: const {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'transcript': transcript,
+          'language': _selectedLanguage == '韓国語' ? 'ko-KR' : 'ja-JP',
+        }),
+      );
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        debugPrint(
+          '_fetchAiSummary.httpError ${response.statusCode} ${response.body}',
+        );
+        return null;
       }
 
-      final firebaseAI = FirebaseAI.googleAI(auth: auth);
-      final model = firebaseAI.generativeModel(model: 'gemini-3-flash-preview');
-      final prompt = _buildAiSummaryPrompt(transcript);
-      final response = await model.generateContent([Content.text(prompt)]);
-      debugPrint('_fetchAiSummary.response ${response.text}');
-      return response.text?.trim();
+      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final summary = decoded['summary'];
+      if (summary is! String) {
+        debugPrint('_fetchAiSummary.invalidSummary ${response.body}');
+        return null;
+      }
+      final text = summary.trim();
+      debugPrint('_fetchAiSummary.response $text');
+      return text.isEmpty ? null : text;
     } catch (e) {
       debugPrint('_fetchAiSummary.e $e');
       return null;
     }
-  }
-
-  String _buildAiSummaryPrompt(String transcript) {
-    final language = _selectedLanguage == '韓国語' ? 'Korean' : 'Japanese';
-    return 'Summarize the following counseling transcript in $language:\n\n$transcript';
   }
 
   void _generateAiSummaryNow(String transcript) async {
@@ -157,10 +219,17 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
       });
       return;
     }
+    if (mounted) {
+      setState(() {
+        _isFetchingAiSummary = true;
+      });
+    }
     final summary = await _fetchAiSummary(transcript);
     if (mounted) {
       setState(() {
         _aiSummary = summary;
+        _isFetchingAiSummary = false;
+        _canStartTranscription = false;
       });
     }
   }
@@ -174,7 +243,10 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('記録を追加', style: theme.textTheme.displaySmall),
+          Text(
+            widget.isEditing ? '記録を編集' : '記録を追加',
+            style: theme.textTheme.displaySmall,
+          ),
 
           const SizedBox(height: 20),
           const _SectionTitle('基本情報'),
@@ -221,10 +293,17 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
             ),
           ] else ...[
             _TranscribeCard(
+              initialLanguage: _selectedLanguage,
+              initialFileName: _audioFileName,
+              initialFilePath: _audioFilePath,
+              initialDuration: _audioDuration,
+              initialTranscript: _transcript,
               onRecorded: _handleRecordingCompleted,
               onTranscriptChanged: (transcript) {
                 setState(() {
                   _transcript = transcript;
+                  _canStartTranscription =
+                      _transcript?.trim().isNotEmpty ?? false;
                 });
               },
               onTranscriptionCompleted: _generateAiSummaryNow,
@@ -232,13 +311,16 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
             if (_aiSummary != null) ...[
               const SizedBox(height: 14),
               PremiumAiSummaryCard(summary: _aiSummary),
-            ] else if (_transcript != null &&
-                _transcript!.trim().isNotEmpty) ...[
+            ],
+            if (_isFetchingAiSummary) ...[
               const SizedBox(height: 14),
-              FilledButton(
+              const Center(child: Text('要約を作成中です、、')),
+            ] else if (_canStartTranscription) ...[
+              const SizedBox(height: 14),
+              Center(child: FilledButton(
                 onPressed: () => _generateAiSummaryNow(_transcript!),
                 child: const Text('AI要約を作成'),
-              ),
+              ),),
             ],
           ],
           const SizedBox(height: 20),
@@ -247,7 +329,7 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
               Expanded(
                 child: FilledButton(
                   onPressed: _saveRecordAsJson,
-                  child: const Text('記録を保存'),
+                  child: Text(widget.isEditing ? '変更を保存' : '記録を保存'),
                 ),
               ),
             ],
@@ -307,11 +389,21 @@ class _FormField extends StatelessWidget {
 
 class _TranscribeCard extends StatefulWidget {
   const _TranscribeCard({
+    this.initialLanguage = '日本語',
+    this.initialFileName,
+    this.initialFilePath,
+    this.initialDuration,
+    this.initialTranscript,
     required this.onRecorded,
     required this.onTranscriptChanged,
     required this.onTranscriptionCompleted,
   });
 
+  final String initialLanguage;
+  final String? initialFileName;
+  final String? initialFilePath;
+  final String? initialDuration;
+  final String? initialTranscript;
   final void Function(String fileName, String? duration, String? filePath)
   onRecorded;
   final void Function(String transcript) onTranscriptChanged;
@@ -348,6 +440,11 @@ class _TranscribeCardState extends State<_TranscribeCard> {
   @override
   void initState() {
     super.initState();
+    _selectedLanguage = widget.initialLanguage;
+    _recordedFileName = widget.initialFileName;
+    _recordedFilePath = widget.initialFilePath;
+    _durationText = widget.initialDuration ?? '00:00';
+    _transcriptController.text = widget.initialTranscript ?? '';
     _player.onPlayerComplete.listen((_) async {
       if (!mounted) return;
       setState(() {
