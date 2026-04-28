@@ -11,7 +11,7 @@ class CounselingRecord {
     required this.date,
     required this.language,
     required this.memo,
-    required this.isPremium,
+    //required this.isPremium,
     this.audioFileName,
     this.audioFilePath,
     this.audioDuration,
@@ -25,7 +25,7 @@ class CounselingRecord {
     'date': date,
     'language': language,
     'memo': memo,
-    'isPremium': isPremium,
+    //'isPremium': isPremium,
     if (audioFileName != null) 'audioFileName': audioFileName,
     if (audioFilePath != null) 'audioFilePath': audioFilePath,
     if (audioDuration != null) 'audioDuration': audioDuration,
@@ -40,7 +40,7 @@ class CounselingRecord {
       date: json['date'] as String,
       language: json['language'] as String,
       memo: json['memo'] as String,
-      isPremium: json['isPremium'] as bool,
+      //isPremium: json['isPremium'] as bool,
       audioFileName: json['audioFileName'] as String?,
       audioFilePath: json['audioFilePath'] as String?,
       audioDuration: json['audioDuration'] as String?,
@@ -54,7 +54,7 @@ class CounselingRecord {
   final String date;
   final String language;
   final String memo;
-  final bool isPremium;
+  //final bool isPremium;
   final String? audioFileName;
   final String? audioFilePath;
   final String? audioDuration;

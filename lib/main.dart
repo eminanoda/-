@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:surgery_memo/firebase_options.dart';
 import 'tab_add.dart';
 import 'tab_list.dart';
-import 'tab_purchase.dart';
 import 'widgets/background_glow.dart';
 
 Future<void> main() async {
@@ -158,7 +157,7 @@ class _HomeShellState extends State<HomeShell> {
           });
         },
       ),
-      const PurchaseScreen(),
+      //const PurchaseScreen(),
     ];
 
     return Scaffold(

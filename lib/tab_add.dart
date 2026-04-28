@@ -14,7 +14,6 @@ import 'package:http/http.dart' as http;
 
 import 'models/conuseling_record.dart';
 import 'widgets/premium_ai_summary_card.dart';
-import 'widgets/premium_feature_card.dart';
 
 class CounselingRecordScreen extends StatefulWidget {
   const CounselingRecordScreen({
@@ -48,7 +47,7 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
   late final TextEditingController _dateController;
   late final TextEditingController _memoController;
   late String _selectedLanguage;
-  late bool _showPremiumPreview;
+  //;
   String? _audioFileName;
   String? _audioFilePath;
   String? _audioDuration;
@@ -68,7 +67,7 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
     );
     _memoController = TextEditingController(text: initialRecord?.memo ?? '');
     _selectedLanguage = initialRecord?.language ?? '日本語';
-    _showPremiumPreview = initialRecord?.isPremium ?? false;
+    //_showPremiumPreview = initialRecord?.isPremium ?? false;
     _audioFileName = initialRecord?.audioFileName;
     _audioFilePath = initialRecord?.audioFilePath;
     _audioDuration = initialRecord?.audioDuration;
@@ -138,7 +137,7 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
       date: _dateController.text.trim(),
       language: _selectedLanguage,
       memo: _memoController.text.trim(),
-      isPremium: _showPremiumPreview,
+      //isPremium: _showPremiumPreview,
       audioFileName: _audioFileName,
       audioFilePath: _audioFilePath,
       audioDuration: _audioDuration,
@@ -280,7 +279,7 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
           const SizedBox(height: 20),
           _FormField(label: 'メモ', maxLines: 5, controller: _memoController),
           const SizedBox(height: 20),
-          if (!_showPremiumPreview) ...[
+          /*if (!_showPremiumPreview) ...[
             const _SectionTitle('有料機能'),
             const SizedBox(height: 12),
             PremiumFeatureCard(
@@ -291,7 +290,7 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
                 });
               },
             ),
-          ] else ...[
+          ] else ...[*/
             _TranscribeCard(
               initialLanguage: _selectedLanguage,
               initialFileName: _audioFileName,
@@ -322,7 +321,7 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
                 child: const Text('AI要約を作成'),
               ),),
             ],
-          ],
+          //],
           const SizedBox(height: 20),
           Row(
             children: [
