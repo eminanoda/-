@@ -30,7 +30,7 @@ class SurgeryMemoApp extends StatelessWidget {
     const terracotta = Color(0xFF5672D9);
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Surgery Memo',
+      title: 'SKLog',
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(

@@ -3,13 +3,13 @@
 <plist version="1.0">
 <dict>
 	<key>API_KEY</key>
-	<string>AIzaSyDGvsrsRrEeo5j3LfT4Dm0N7vCjqKttY</string>
+	<string>AIzaSyDfHRPORh1N1ObdRfHQEYI2Eov0qiT6wik</string>
 	<key>GCM_SENDER_ID</key>
 	<string>514630778460</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.example.surgeryMemo</string>
+	<string>com.noda.sklog</string>
 	<key>PROJECT_ID</key>
 	<string>surgery-counselling-memo</string>
 	<key>STORAGE_BUCKET</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:514630778460:ios:f1acbfac1969b45f84b099</string>
+	<string>1:514630778460:ios:5109c3b28383da0084b099</string>
 </dict>
 </plist>

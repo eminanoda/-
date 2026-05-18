@@ -1,4 +1,4 @@
-package com.example.surgery_memo
+package com.noda.sklog
 
 import io.flutter.embedding.android.FlutterActivity
 

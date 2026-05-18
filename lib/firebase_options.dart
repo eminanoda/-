@@ -51,19 +51,19 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyD1K182tYI39fwohPhs3hAmRv8yzkMQky0',
-    appId: '1:514630778460:android:6acccb1da60aea1984b099',
+    appId: '1:514630778460:android:63dc988af6f1f2bc84b099',
     messagingSenderId: '514630778460',
     projectId: 'surgery-counselling-memo',
     storageBucket: 'surgery-counselling-memo.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyDGvsrsRrEeo5j3LfT4Dm0N7vCjqKttJqY',
-    appId: '1:514630778460:ios:f1acbfac1969b45f84b099',
+    apiKey: 'AIzaSyDfHRPORh1N1ObdRfHQEYI2Eov0qiT6wik',
+    appId: '1:514630778460:ios:5109c3b28383da0084b099',
     messagingSenderId: '514630778460',
     projectId: 'surgery-counselling-memo',
     storageBucket: 'surgery-counselling-memo.firebasestorage.app',
-    iosBundleId: 'com.example.surgeryMemo',
+    iosBundleId: 'com.noda.sklog',
   );
 
 }
