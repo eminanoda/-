@@ -68,7 +68,7 @@ class CounselingRecordDetailScreen extends StatelessWidget {
             const SizedBox(height: 14),
             _DetailSection(
               title: 'メモ',
-              child: Text(record.memo, style: theme.textTheme.bodyLarge),
+              child: Text(record.memo.isEmpty ? 'メモがありません' : record.memo, style: theme.textTheme.bodyLarge),
             ),
           ],
         ),
@@ -161,6 +161,22 @@ class _AudioPlaybackCardState extends State<_AudioPlaybackCard> {
         _position = position;
       });
     });
+    try {
+      if (widget.record.audioDuration != null) {
+      _duration = parseDuration(widget.record.audioDuration!);
+    }
+    }catch(e){
+      debugPrint('failed to parse ${widget.record.audioDuration}');
+    }
+  }
+
+  Duration parseDuration(String value) {
+    final parts = value.split(':');
+
+    final hours = int.parse(parts[0]);
+    final minutes = int.parse(parts[1]);
+
+    return Duration(hours: hours, minutes: minutes);
   }
 
   @override

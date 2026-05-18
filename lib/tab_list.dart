@@ -246,7 +246,7 @@ class _RecordCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 14),
-              Text(record.memo, style: theme.textTheme.bodyLarge),
+              Text(record.memo, style: theme.textTheme.bodyLarge,maxLines: 4,overflow: TextOverflow.ellipsis,),
               const SizedBox(height: 18),
               Row(
                 children: [

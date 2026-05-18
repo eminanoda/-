@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:surgery_memo/firebase_options.dart';
 import 'tab_add.dart';
 import 'tab_list.dart';
@@ -31,6 +32,11 @@ class SurgeryMemoApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'SKLog',
+  localizationsDelegates: const [
+    GlobalMaterialLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+    GlobalCupertinoLocalizations.delegate,
+  ],
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
@@ -203,11 +209,11 @@ class _HomeShellState extends State<HomeShell> {
             selectedIcon: Icon(CupertinoIcons.square_pencil),
             label: '記録作成',
           ),
-          NavigationDestination(
+          /*NavigationDestination(
             icon: Icon(CupertinoIcons.star_circle),
             selectedIcon: Icon(CupertinoIcons.star_circle_fill),
             label: '有料機能',
-          ),
+          ),*/
         ],
       ),
     );

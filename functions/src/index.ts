@@ -144,7 +144,7 @@ export const summarizeCounseling = onRequest(
       const responseText = await response.text();
       if (!response.ok) {
         console.error('Gemini summarize error:', response.status, responseText);
-        res.status(502).json({ error: 'Failed to generate summary' });
+        res.status(502).json({ error: 'Failed to generate summary' + responseText });
         return;
       }
 

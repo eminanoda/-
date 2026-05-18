@@ -47,7 +47,7 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
   late final TextEditingController _dateController;
   late final TextEditingController _memoController;
   late String _selectedLanguage;
-  //;
+
   String? _audioFileName;
   String? _audioFilePath;
   String? _audioDuration;
@@ -60,8 +60,12 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
   void initState() {
     super.initState();
     final initialRecord = widget.initialRecord;
-    _clinicController = TextEditingController(text: initialRecord?.clinic ?? '');
-    _doctorController = TextEditingController(text: initialRecord?.doctor ?? '');
+    _clinicController = TextEditingController(
+      text: initialRecord?.clinic ?? '',
+    );
+    _doctorController = TextEditingController(
+      text: initialRecord?.doctor ?? '',
+    );
     _dateController = TextEditingController(
       text: initialRecord?.date ?? '2026 / 03 / 18',
     );
@@ -152,9 +156,7 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
         await addCounselingRecord(record);
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(widget.isEditing ? '更新しました' : '保存しました')),
       );
       widget.onSaved?.call();
@@ -193,6 +195,19 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
         debugPrint(
           '_fetchAiSummary.httpError ${response.statusCode} ${response.body}',
         );
+        if (!mounted) return null;
+        await showDialog<bool>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            title: Text('AI要約に失敗しました'),
+            actions: [
+              FilledButton.tonal(
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
         return null;
       }
 
@@ -228,7 +243,9 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
       setState(() {
         _aiSummary = summary;
         _isFetchingAiSummary = false;
-        _canStartTranscription = false;
+        if (summary != null) {
+          _canStartTranscription = false;
+        }
       });
     }
   }
@@ -239,6 +256,7 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 30),
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -260,22 +278,6 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
             decoration: const InputDecoration(labelText: '日付'),
             onTap: _selectDate,
           ),
-          const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
-            initialValue: _selectedLanguage,
-            items: const [
-              DropdownMenuItem(value: '日本語', child: Text('日本語')),
-              DropdownMenuItem(value: '韓国語', child: Text('韓国語')),
-            ],
-            onChanged: (value) {
-              if (value != null) {
-                setState(() {
-                  _selectedLanguage = value;
-                });
-              }
-            },
-            decoration: const InputDecoration(labelText: '言語'),
-          ),
           const SizedBox(height: 20),
           _FormField(label: 'メモ', maxLines: 5, controller: _memoController),
           const SizedBox(height: 20),
@@ -291,36 +293,82 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
               },
             ),
           ] else ...[*/
-            _TranscribeCard(
-              initialLanguage: _selectedLanguage,
-              initialFileName: _audioFileName,
-              initialFilePath: _audioFilePath,
-              initialDuration: _audioDuration,
-              initialTranscript: _transcript,
-              onRecorded: _handleRecordingCompleted,
-              onTranscriptChanged: (transcript) {
-                setState(() {
-                  _transcript = transcript;
-                  _canStartTranscription =
-                      _transcript?.trim().isNotEmpty ?? false;
-                });
-              },
-              onTranscriptionCompleted: _generateAiSummaryNow,
+          _TranscribeCard(
+            initialLanguage: _selectedLanguage,
+            initialFileName: _audioFileName,
+            initialFilePath: _audioFilePath,
+            initialDuration: _audioDuration,
+            initialTranscript: _transcript,
+            onRecorded: _handleRecordingCompleted,
+            onTranscriptChanged: (transcript) {
+              setState(() {
+                _transcript = transcript;
+                _canStartTranscription =
+                    _transcript?.trim().isNotEmpty ?? false;
+              });
+            },
+            onTranscriptionCompleted: _generateAiSummaryNow,
+          ),
+          if (_aiSummary != null) ...[
+            const SizedBox(height: 14),
+            PremiumAiSummaryCard(summary: _aiSummary),
+          ],
+          if (_isFetchingAiSummary) ...[
+            const SizedBox(height: 14),
+            const  Row(
+              spacing: 12,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+              SizedBox(
+  width: 20,
+  height: 20,
+  child: CircularProgressIndicator(strokeWidth: 3)),
+              Text('要約を作成中です')
+            ],),
+          ] else if (_canStartTranscription) ...[
+            const SizedBox(height: 14),
+            Center(
+              child: FilledButton(
+                onPressed: () async {
+                  if (_audioFileName == null) {
+                    await showDialog<bool>(
+                      context: context,
+                      builder: (dialogContext) => AlertDialog(
+                        title: Text('要約を始める前に録音を停止してください'),
+                        actions: [
+                          FilledButton.tonal(
+                            onPressed: () =>
+                                Navigator.of(dialogContext).pop(true),
+                            child: const Text('OK'),
+                          ),
+                        ],
+                      ),
+                    );
+                  } else {
+                    _generateAiSummaryNow(_transcript!);
+                  }
+                },
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      CupertinoIcons.sparkles,
+                      color: Color(0xFF9FE7E0),
+                      size: 18,
+                    ),
+                    SizedBox(width: 8),
+                    const Text(
+                      'AI要約を作成 ',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            if (_aiSummary != null) ...[
-              const SizedBox(height: 14),
-              PremiumAiSummaryCard(summary: _aiSummary),
-            ],
-            if (_isFetchingAiSummary) ...[
-              const SizedBox(height: 14),
-              const Center(child: Text('要約を作成中です、、')),
-            ] else if (_canStartTranscription) ...[
-              const SizedBox(height: 14),
-              Center(child: FilledButton(
-                onPressed: () => _generateAiSummaryNow(_transcript!),
-                child: const Text('AI要約を作成'),
-              ),),
-            ],
+          ],
           //],
           const SizedBox(height: 20),
           Row(
@@ -328,7 +376,13 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
               Expanded(
                 child: FilledButton(
                   onPressed: _saveRecordAsJson,
-                  child: Text(widget.isEditing ? '変更を保存' : '記録を保存'),
+                  child: Text(
+                    widget.isEditing ? '変更を保存' : '記録を保存',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -612,8 +666,11 @@ class _TranscribeCardState extends State<_TranscribeCard> {
     await _speechToText.listen(
       onResult: _onSpeechResult,
       localeId: _selectedLanguage == '日本語' ? 'ja_JP' : 'ko_KR',
-      listenMode: ListenMode.dictation,
-      listenOptions: SpeechListenOptions(partialResults: true),
+      listenFor: Duration(minutes: 60),
+      listenOptions: SpeechListenOptions(
+        partialResults: true,
+        listenMode: ListenMode.dictation,
+      ),
     );
     if (!mounted) return;
     setState(() {
@@ -670,7 +727,7 @@ class _TranscribeCardState extends State<_TranscribeCard> {
   }
 
   Future<void> _pickAudioFile() async {
-    final result = await FilePicker.platform.pickFiles(
+    final result = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['mp3', 'wav', 'flac', 'ogg'],
     );

@@ -34,7 +34,7 @@ class PremiumAiSummaryCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            displayText,
+            displayText.isEmpty ? 'AI要約がありません' : displayText,
             style: const TextStyle(color: Color(0xFFE9F1FF), height: 1.5),
           ),
         ],

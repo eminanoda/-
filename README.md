@@ -1,6 +1,4 @@
 # surgery_memo
-todo AI 要約
-todo 課金されたら課金ページの購入ボタン非表示、登録済み表示
 
 AI要約はアプリから直接 Gemini を呼ばず、Cloud Run 関数 `summarizeCounseling` 経由で実行する。
 
