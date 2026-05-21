@@ -51,6 +51,35 @@
       ]
     },
     {
+      "name": "speech_to_text",
+      "version": "7.4.0",
+      "dependencies": [
+        "clock",
+        "flutter",
+        "flutter_web_plugins",
+        "json_annotation",
+        "meta",
+        "speech_to_text_platform_interface",
+        "speech_to_text_windows",
+        "web"
+      ]
+    },
+    {
+      "name": "record",
+      "version": "6.2.0",
+      "dependencies": [
+        "flutter",
+        "record_android",
+        "record_ios",
+        "record_linux",
+        "record_macos",
+        "record_platform_interface",
+        "record_web",
+        "record_windows",
+        "uuid"
+      ]
+    },
+    {
       "name": "file_picker",
       "version": "11.0.2",
       "dependencies": [
@@ -99,21 +128,6 @@
       ]
     },
     {
-      "name": "speech_to_text",
-      "version": "6.6.0",
-      "dependencies": [
-        "clock",
-        "flutter",
-        "flutter_web_plugins",
-        "js",
-        "json_annotation",
-        "meta",
-        "pedantic",
-        "speech_to_text_macos",
-        "speech_to_text_platform_interface"
-      ]
-    },
-    {
       "name": "audioplayers",
       "version": "5.2.1",
       "dependencies": [
@@ -130,18 +144,6 @@
         "path_provider",
         "synchronized",
         "uuid"
-      ]
-    },
-    {
-      "name": "record",
-      "version": "4.4.4",
-      "dependencies": [
-        "flutter",
-        "record_linux",
-        "record_macos",
-        "record_platform_interface",
-        "record_web",
-        "record_windows"
       ]
     },
     {
@@ -285,6 +287,107 @@
       ]
     },
     {
+      "name": "speech_to_text_windows",
+      "version": "1.0.1",
+      "dependencies": [
+        "flutter",
+        "speech_to_text_platform_interface"
+      ]
+    },
+    {
+      "name": "web",
+      "version": "1.1.1",
+      "dependencies": []
+    },
+    {
+      "name": "flutter_web_plugins",
+      "version": "0.0.0",
+      "dependencies": [
+        "flutter"
+      ]
+    },
+    {
+      "name": "json_annotation",
+      "version": "4.11.0",
+      "dependencies": [
+        "meta"
+      ]
+    },
+    {
+      "name": "speech_to_text_platform_interface",
+      "version": "2.4.0",
+      "dependencies": [
+        "flutter",
+        "meta",
+        "plugin_platform_interface"
+      ]
+    },
+    {
+      "name": "record_macos",
+      "version": "1.2.1",
+      "dependencies": [
+        "flutter",
+        "record_platform_interface"
+      ]
+    },
+    {
+      "name": "record_ios",
+      "version": "1.2.0",
+      "dependencies": [
+        "flutter",
+        "record_platform_interface"
+      ]
+    },
+    {
+      "name": "record_android",
+      "version": "1.5.1",
+      "dependencies": [
+        "flutter",
+        "record_platform_interface"
+      ]
+    },
+    {
+      "name": "record_linux",
+      "version": "1.3.0",
+      "dependencies": [
+        "flutter",
+        "record_platform_interface"
+      ]
+    },
+    {
+      "name": "record_windows",
+      "version": "1.0.7",
+      "dependencies": [
+        "flutter",
+        "record_platform_interface"
+      ]
+    },
+    {
+      "name": "record_web",
+      "version": "1.3.0",
+      "dependencies": [
+        "flutter",
+        "flutter_web_plugins",
+        "record_platform_interface",
+        "web"
+      ]
+    },
+    {
+      "name": "record_platform_interface",
+      "version": "1.5.0",
+      "dependencies": [
+        "flutter",
+        "plugin_platform_interface"
+      ]
+    },
+    {
+      "name": "uuid",
+      "version": "3.0.7",
+      "dependencies": [
+        "crypto"
+      ]
+    },
+    {
       "name": "dbus",
       "version": "0.7.12",
       "dependencies": [
@@ -293,11 +396,6 @@
         "meta",
         "xml"
       ]
-    },
-    {
-      "name": "web",
-      "version": "1.1.1",
-      "dependencies": []
     },
     {
       "name": "cross_file",
@@ -329,13 +427,6 @@
     {
       "name": "flutter_plugin_android_lifecycle",
       "version": "2.0.34",
-      "dependencies": [
-        "flutter"
-      ]
-    },
-    {
-      "name": "flutter_web_plugins",
-      "version": "0.0.0",
       "dependencies": [
         "flutter"
       ]
@@ -408,50 +499,6 @@
       ]
     },
     {
-      "name": "js",
-      "version": "0.6.7",
-      "dependencies": [
-        "meta"
-      ]
-    },
-    {
-      "name": "pedantic",
-      "version": "1.11.1",
-      "dependencies": []
-    },
-    {
-      "name": "json_annotation",
-      "version": "4.11.0",
-      "dependencies": [
-        "meta"
-      ]
-    },
-    {
-      "name": "speech_to_text_macos",
-      "version": "1.1.0",
-      "dependencies": [
-        "flutter",
-        "plugin_platform_interface",
-        "speech_to_text_platform_interface"
-      ]
-    },
-    {
-      "name": "speech_to_text_platform_interface",
-      "version": "2.3.0",
-      "dependencies": [
-        "flutter",
-        "meta",
-        "plugin_platform_interface"
-      ]
-    },
-    {
-      "name": "uuid",
-      "version": "3.0.7",
-      "dependencies": [
-        "crypto"
-      ]
-    },
-    {
       "name": "synchronized",
       "version": "3.4.0",
       "dependencies": []
@@ -513,49 +560,6 @@
       "dependencies": [
         "audioplayers_platform_interface",
         "flutter"
-      ]
-    },
-    {
-      "name": "record_linux",
-      "version": "0.4.1",
-      "dependencies": [
-        "flutter",
-        "path",
-        "record_platform_interface"
-      ]
-    },
-    {
-      "name": "record_macos",
-      "version": "0.2.2",
-      "dependencies": [
-        "flutter",
-        "record_platform_interface"
-      ]
-    },
-    {
-      "name": "record_windows",
-      "version": "0.7.1",
-      "dependencies": [
-        "flutter",
-        "path",
-        "record_platform_interface"
-      ]
-    },
-    {
-      "name": "record_web",
-      "version": "0.5.0",
-      "dependencies": [
-        "flutter",
-        "flutter_web_plugins",
-        "record_platform_interface"
-      ]
-    },
-    {
-      "name": "record_platform_interface",
-      "version": "0.5.0",
-      "dependencies": [
-        "flutter",
-        "plugin_platform_interface"
       ]
     },
     {
@@ -722,6 +726,13 @@
       ]
     },
     {
+      "name": "crypto",
+      "version": "3.0.7",
+      "dependencies": [
+        "typed_data"
+      ]
+    },
+    {
       "name": "xml",
       "version": "6.6.1",
       "dependencies": [
@@ -749,10 +760,10 @@
       ]
     },
     {
-      "name": "crypto",
-      "version": "3.0.7",
+      "name": "js",
+      "version": "0.6.7",
       "dependencies": [
-        "typed_data"
+        "meta"
       ]
     },
     {

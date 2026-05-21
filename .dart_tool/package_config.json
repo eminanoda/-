@@ -386,12 +386,6 @@
       "languageVersion": "3.2"
     },
     {
-      "name": "pedantic",
-      "rootUri": "file:///Users/tenna/.pub-cache/hosted/pub.dev/pedantic-1.11.1",
-      "packageUri": "lib/",
-      "languageVersion": "2.12"
-    },
-    {
       "name": "petitparser",
       "rootUri": "file:///Users/tenna/.pub-cache/hosted/pub.dev/petitparser-7.0.2",
       "packageUri": "lib/",
@@ -423,39 +417,51 @@
     },
     {
       "name": "record",
-      "rootUri": "file:///Users/tenna/.pub-cache/hosted/pub.dev/record-4.4.4",
+      "rootUri": "file:///Users/tenna/.pub-cache/hosted/pub.dev/record-6.2.0",
       "packageUri": "lib/",
-      "languageVersion": "2.15"
+      "languageVersion": "3.5"
+    },
+    {
+      "name": "record_android",
+      "rootUri": "file:///Users/tenna/.pub-cache/hosted/pub.dev/record_android-1.5.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.5"
+    },
+    {
+      "name": "record_ios",
+      "rootUri": "file:///Users/tenna/.pub-cache/hosted/pub.dev/record_ios-1.2.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.5"
     },
     {
       "name": "record_linux",
-      "rootUri": "file:///Users/tenna/.pub-cache/hosted/pub.dev/record_linux-0.4.1",
+      "rootUri": "file:///Users/tenna/.pub-cache/hosted/pub.dev/record_linux-1.3.0",
       "packageUri": "lib/",
-      "languageVersion": "2.15"
+      "languageVersion": "3.5"
     },
     {
       "name": "record_macos",
-      "rootUri": "file:///Users/tenna/.pub-cache/hosted/pub.dev/record_macos-0.2.2",
+      "rootUri": "file:///Users/tenna/.pub-cache/hosted/pub.dev/record_macos-1.2.1",
       "packageUri": "lib/",
-      "languageVersion": "2.15"
+      "languageVersion": "3.5"
     },
     {
       "name": "record_platform_interface",
-      "rootUri": "file:///Users/tenna/.pub-cache/hosted/pub.dev/record_platform_interface-0.5.0",
+      "rootUri": "file:///Users/tenna/.pub-cache/hosted/pub.dev/record_platform_interface-1.5.0",
       "packageUri": "lib/",
-      "languageVersion": "2.15"
+      "languageVersion": "3.5"
     },
     {
       "name": "record_web",
-      "rootUri": "file:///Users/tenna/.pub-cache/hosted/pub.dev/record_web-0.5.0",
+      "rootUri": "file:///Users/tenna/.pub-cache/hosted/pub.dev/record_web-1.3.0",
       "packageUri": "lib/",
-      "languageVersion": "2.15"
+      "languageVersion": "3.5"
     },
     {
       "name": "record_windows",
-      "rootUri": "file:///Users/tenna/.pub-cache/hosted/pub.dev/record_windows-0.7.1",
+      "rootUri": "file:///Users/tenna/.pub-cache/hosted/pub.dev/record_windows-1.0.7",
       "packageUri": "lib/",
-      "languageVersion": "2.15"
+      "languageVersion": "3.5"
     },
     {
       "name": "sky_engine",
@@ -471,19 +477,19 @@
     },
     {
       "name": "speech_to_text",
-      "rootUri": "file:///Users/tenna/.pub-cache/hosted/pub.dev/speech_to_text-6.6.0",
+      "rootUri": "file:///Users/tenna/.pub-cache/hosted/pub.dev/speech_to_text-7.4.0",
       "packageUri": "lib/",
-      "languageVersion": "3.0"
-    },
-    {
-      "name": "speech_to_text_macos",
-      "rootUri": "file:///Users/tenna/.pub-cache/hosted/pub.dev/speech_to_text_macos-1.1.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.0"
+      "languageVersion": "3.3"
     },
     {
       "name": "speech_to_text_platform_interface",
-      "rootUri": "file:///Users/tenna/.pub-cache/hosted/pub.dev/speech_to_text_platform_interface-2.3.0",
+      "rootUri": "file:///Users/tenna/.pub-cache/hosted/pub.dev/speech_to_text_platform_interface-2.4.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
+    },
+    {
+      "name": "speech_to_text_windows",
+      "rootUri": "file:///Users/tenna/.pub-cache/hosted/pub.dev/speech_to_text_windows-1.0.1",
       "packageUri": "lib/",
       "languageVersion": "3.0"
     },

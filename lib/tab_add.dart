@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
@@ -315,16 +314,18 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
           ],
           if (_isFetchingAiSummary) ...[
             const SizedBox(height: 14),
-            const  Row(
+            const Row(
               spacing: 12,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-              SizedBox(
-  width: 20,
-  height: 20,
-  child: CircularProgressIndicator(strokeWidth: 3)),
-              Text('要約を作成中です')
-            ],),
+                SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 3),
+                ),
+                Text('要約を作成中です'),
+              ],
+            ),
           ] else if (_canStartTranscription) ...[
             const SizedBox(height: 14),
             Center(
@@ -467,7 +468,7 @@ class _TranscribeCard extends StatefulWidget {
 }
 
 class _TranscribeCardState extends State<_TranscribeCard> {
-  final Record _recorder = Record();
+  final _recorder = AudioRecorder();
   final AudioPlayer _player = AudioPlayer();
   final SpeechToText _speechToText = SpeechToText();
   final TextEditingController _transcriptController = TextEditingController();
@@ -476,7 +477,6 @@ class _TranscribeCardState extends State<_TranscribeCard> {
   bool _isListening = false;
   bool _isTranscribing = false;
   bool _transcriptionPlayback = false;
-  bool _speechAvailable = false;
   double _audioLevel = 0;
   Duration _recordDuration = Duration.zero;
   String _durationText = '00:00';
@@ -512,7 +512,6 @@ class _TranscribeCardState extends State<_TranscribeCard> {
       if (!mounted) return;
       widget.onTranscriptChanged(_transcriptController.text);
     });
-    _initSpeech();
   }
 
   @override
@@ -525,25 +524,49 @@ class _TranscribeCardState extends State<_TranscribeCard> {
   }
 
   Future<void> _initSpeech() async {
-    final available = await _speechToText.initialize(
-      onError: (error) {
+    await _speechToText.initialize(
+      onError: (error) async {
+        debugPrint('speech error: ${error.errorMsg}');
+
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('音声認識の初期化に失敗しました: ${error.errorMsg}')),
-        );
+
+        setState(() {
+          _isListening = false;
+          _isTranscribing = false;
+        });
+
+        if (error.errorMsg == 'error_speech_timeout') {
+          await Future.delayed(const Duration(milliseconds: 300));
+
+          if (!mounted || !_isRecording) return;
+
+          await _startListening(forRecording: true);
+          return;
+        }
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('音声認識エラー: ${error.errorMsg}')));
       },
-      onStatus: (_) {},
+      onStatus: (status) {
+        debugPrint('speech status: $status');
+        if (status == 'done' || status == 'notListening') {
+          if (_isRecording) {
+            Future.delayed(const Duration(milliseconds: 500), () async {
+              if (!mounted || !_isRecording || _isListening) return;
+              await _startListening(forRecording: true);
+            });
+          }
+        }
+      },
     );
-    if (!mounted) return;
-    setState(() {
-      _speechAvailable = available;
-    });
   }
 
   Future<void> _toggleRecording() async {
     if (_isRecording) {
       await _stopRecording();
     } else {
+      await _initSpeech();
       await _startRecording();
     }
   }
@@ -563,9 +586,8 @@ class _TranscribeCardState extends State<_TranscribeCard> {
 
     try {
       await _recorder.start(
+        RecordConfig(encoder: AudioEncoder.aacLc, bitRate: 128000),
         path: path,
-        encoder: AudioEncoder.aacLc,
-        bitRate: 128000,
       );
       _recordedFilePath = path;
       _meterTimer?.cancel();
@@ -577,16 +599,15 @@ class _TranscribeCardState extends State<_TranscribeCard> {
         _durationText = '00:00';
       });
 
-      if (_speechAvailable) {
-        await _startListening(forRecording: true);
-      }
+      await _startListening(forRecording: true);
 
-      _meterTimer = Timer.periodic(const Duration(milliseconds: 100), (
+      _meterTimer = Timer.periodic(const Duration(milliseconds: 300), (
         _,
       ) async {
         if (!mounted || !_isRecording) return;
         final amplitude = await _recorder.getAmplitude();
         final normalized = ((amplitude.current + 120) / 120).clamp(0.0, 1.0);
+        debugPrint('_recorder ${await _recorder.isRecording()} $normalized');
         setState(() {
           _audioLevel = normalized;
         });
@@ -643,14 +664,7 @@ class _TranscribeCardState extends State<_TranscribeCard> {
   }
 
   Future<void> _startListening({required bool forRecording}) async {
-    if (!_speechAvailable) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('音声認識が利用できません。')));
-      return;
-    }
-
+    
     if (!forRecording && _recordedFilePath != null) {
       try {
         await _player.play(DeviceFileSource(_recordedFilePath!));
