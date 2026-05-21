@@ -1,4 +1,4 @@
-package com.noda.sklog
+package com.noda.ortholog
 
 import io.flutter.embedding.android.FlutterActivity
 

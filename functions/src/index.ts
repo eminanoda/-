@@ -2,23 +2,14 @@ import * as functions from 'firebase-functions';
 import * as speech from '@google-cloud/speech';
 import { Request, Response } from 'express';
 import * as admin from 'firebase-admin';
-import multer from 'multer';
+import Busboy from 'busboy';
 import * as path from 'path';
 import { onRequest } from 'firebase-functions/v2/https';
 import { defineSecret } from 'firebase-functions/params';
 
-declare global {
-  namespace Express {
-    interface Request {
-      file?: Express.Multer.File;
-    }
-  }
-}
-
 admin.initializeApp();
 
 const client = new speech.SpeechClient();
-const upload = multer({ storage: multer.memoryStorage() });
 const geminiModel = 'gemini-2.5-flash';
 const geminiApiKey = defineSecret('GEMINI_API_KEY');
 
@@ -52,57 +43,107 @@ ${transcript}
 `.trim();
 }
 
-export const transcribeAudio = functions.https.onRequest((req: Request, res: Response) => {
-  upload.single('audio')(req, res, async (err: any) => {
-    if (err) {
-      res.status(500).send('File upload error');
-      return;
-    }
-
+export const transcribeAudio = functions.https.onRequest(
+  async (req: Request, res: Response) => {
     if (req.method !== 'POST') {
       res.status(405).send('Method not allowed');
       return;
     }
 
-    try {
-      const file = req.file;
-      const language = req.body.language || 'ja-JP';
+    const busboy = Busboy({
+      headers: req.headers,
+      limits: {
+        files: 1,
+        fileSize: 20 * 1024 * 1024,
+      },
+    });
 
-      if (!file) {
-        res.status(400).send('No audio file provided');
+    let audioBuffer: Buffer | null = null;
+    let originalName = 'audio.wav';
+    let language = 'ja-JP';
+
+    busboy.on('field', (fieldname, value) => {
+      if (fieldname === 'language') {
+        language = value || 'ja-JP';
+      }
+    });
+
+    busboy.on('file', (fieldname, file, info) => {
+      if (fieldname !== 'audio') {
+        file.resume();
         return;
       }
 
-      const audioBytes = file.buffer;
-      const ext = path.extname(file.originalname);
-      const encoding = getEncodingFromExtension(ext);
+      originalName = info.filename || 'audio.wav';
 
-      const audio = {
-        content: audioBytes.toString('base64'),
-      };
+      const chunks: Buffer[] = [];
 
-      const config = {
-        encoding: encoding,
-        languageCode: language,
-      };
+      file.on('data', (data) => {
+        chunks.push(data);
+      });
 
-      const request = {
-        audio: audio,
-        config: config,
-      };
+      file.on('end', () => {
+        audioBuffer = Buffer.concat(chunks);
+      });
+    });
 
-      const [response] = await client.recognize(request);
-      const transcription = response.results
-        ?.map((result: speech.protos.google.cloud.speech.v1.ISpeechRecognitionResult) => result.alternatives?.[0]?.transcript)
-        .join(' ') || '';
+    busboy.on('error', (error) => {
+      console.error('Busboy error:', error);
+      res.status(500).json({
+        message: 'File upload error',
+        error: error,
+      });
+    });
 
-      res.status(200).json({ transcript: transcription });
-    } catch (error) {
-      console.error('Error transcribing audio:', error);
-      res.status(500).send('Error transcribing audio');
+    busboy.on('finish', async () => {
+      try {
+        if (!audioBuffer) {
+          res.status(400).json({ message: 'No audio file provided' });
+          return;
+        }
+
+        const ext = path.extname(originalName).toLowerCase();
+        const encoding = getEncodingFromExtension(ext);
+
+        const [response] = await client.recognize({
+          audio: {
+            content: audioBuffer.toString('base64'),
+          },
+          config: {
+            encoding,
+            sampleRateHertz: ext === '.wav' ? 16000 : undefined,
+            languageCode: language,
+            enableAutomaticPunctuation: true,
+          },
+        });
+
+        const transcription =
+          response.results
+            ?.map((result) => result.alternatives?.[0]?.transcript)
+            .filter(Boolean)
+            .join(' ') || '';
+
+        res.status(200).json({ transcript: transcription });
+      } catch (error: any) {
+        console.error('Error transcribing audio:', error);
+        res.status(500).json({
+          message: 'Error transcribing audio',
+          error: error.message,
+          code: error.code,
+          details: error.details,
+        });
+      }
+    });
+
+    const rawBody = (req as Request & { rawBody?: Buffer }).rawBody;
+
+    if (rawBody) {
+      busboy.end(rawBody);
+    } else {
+      req.pipe(busboy);
     }
-  });
-});
+  }
+);
 
 export const summarizeCounseling = onRequest(
   { secrets: [geminiApiKey] },

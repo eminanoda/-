@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:http_parser/http_parser.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -476,6 +477,7 @@ class _TranscribeCardState extends State<_TranscribeCard> {
   bool _isPlaying = false;
   bool _isListening = false;
   bool _isTranscribing = false;
+  bool _isTranscribingRemote = false;
   bool _transcriptionPlayback = false;
   double _audioLevel = 0;
   Duration _recordDuration = Duration.zero;
@@ -566,7 +568,9 @@ class _TranscribeCardState extends State<_TranscribeCard> {
     if (_isRecording) {
       await _stopRecording();
     } else {
-      await _initSpeech();
+      if (!Platform.isAndroid) {
+        await _initSpeech();
+      }
       await _startRecording();
     }
   }
@@ -581,12 +585,16 @@ class _TranscribeCardState extends State<_TranscribeCard> {
     }
 
     final directory = await getApplicationDocumentsDirectory();
-    _recordedFileName = 'record_${DateTime.now().millisecondsSinceEpoch}.m4a';
+    _recordedFileName = 'record_${DateTime.now().millisecondsSinceEpoch}.wav';
     final path = '${directory.path}/$_recordedFileName';
 
     try {
       await _recorder.start(
-        RecordConfig(encoder: AudioEncoder.aacLc, bitRate: 128000),
+        const RecordConfig(
+          encoder: AudioEncoder.wav,
+          sampleRate: 16000,
+          numChannels: 1,
+        ),
         path: path,
       );
       _recordedFilePath = path;
@@ -599,7 +607,9 @@ class _TranscribeCardState extends State<_TranscribeCard> {
         _durationText = '00:00';
       });
 
-      await _startListening(forRecording: true);
+      if (!Platform.isAndroid) {
+        await _startListening(forRecording: true);
+      }
 
       _meterTimer = Timer.periodic(const Duration(milliseconds: 300), (
         _,
@@ -631,8 +641,14 @@ class _TranscribeCardState extends State<_TranscribeCard> {
   Future<void> _stopRecording() async {
     _meterTimer?.cancel();
     _durationTimer?.cancel();
+
     try {
       await _recorder.stop();
+
+      if (_isListening) {
+        await _stopListening();
+      }
+
       if (_recordedFileName != null) {
         widget.onRecorded(
           _recordedFileName!,
@@ -640,23 +656,57 @@ class _TranscribeCardState extends State<_TranscribeCard> {
           _recordedFilePath,
         );
       }
-      if (_isListening) {
-        await _stopListening();
-      }
+
       if (!mounted) return;
+
       setState(() {
         _isRecording = false;
         _audioLevel = 0;
       });
+
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('録音を停止しました')));
-      // Generate AI summary after recording stops
+
+      if (Platform.isAndroid && _recordedFilePath != null) {
+        setState(() {
+          _isTranscribing = true;
+        });
+
+        final transcript = await _transcribeAudioFile(
+          _recordedFilePath!,
+          _selectedLanguage,
+        );
+
+        if (!mounted) return;
+
+        setState(() {
+          _isTranscribing = false;
+        });
+
+        if (transcript != null && transcript.trim().isNotEmpty) {
+          setState(() {
+            _transcriptController.text = transcript;
+          });
+
+          widget.onTranscriptionCompleted(transcript);
+        }
+
+        return;
+      }
+
       if (_transcriptController.text.trim().isNotEmpty) {
         widget.onTranscriptionCompleted(_transcriptController.text);
       }
     } catch (error) {
       if (!mounted) return;
+
+      setState(() {
+        _isRecording = false;
+        _isTranscribing = false;
+        _audioLevel = 0;
+      });
+
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('録音の停止に失敗しました: $error')));
@@ -664,7 +714,6 @@ class _TranscribeCardState extends State<_TranscribeCard> {
   }
 
   Future<void> _startListening({required bool forRecording}) async {
-    
     if (!forRecording && _recordedFilePath != null) {
       try {
         await _player.play(DeviceFileSource(_recordedFilePath!));
@@ -717,18 +766,40 @@ class _TranscribeCardState extends State<_TranscribeCard> {
   }
 
   Future<String?> _transcribeAudioFile(String filePath, String language) async {
+    setState(() {
+      _isTranscribingRemote = true;
+    });
     try {
       final request = http.MultipartRequest('POST', Uri.parse(cloudRunUrl));
-      request.files.add(await http.MultipartFile.fromPath('audio', filePath));
+
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'audio',
+          filePath,
+          filename: filePath.split('/').last,
+          contentType: MediaType('audio', 'wav'),
+        ),
+      );
+
       request.fields['language'] = language == '日本語' ? 'ja-JP' : 'ko-KR';
 
       final response = await request.send();
+
+      setState(() {
+        _isTranscribingRemote = false;
+      });
+
+      final responseBody = await response.stream.bytesToString();
+
       if (response.statusCode == 200) {
-        final responseBody = await response.stream.bytesToString();
         final jsonResponse = json.decode(responseBody);
         return jsonResponse['transcript'];
       } else {
-        throw Exception('Failed to transcribe: ${response.statusCode}');
+        debugPrint('transcribe failed: ${response.statusCode}');
+        debugPrint('body: $responseBody');
+        throw Exception(
+          'Failed to transcribe: ${response.statusCode} $responseBody',
+        );
       }
     } catch (e) {
       if (!mounted) return null;
@@ -736,6 +807,10 @@ class _TranscribeCardState extends State<_TranscribeCard> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('文字起こしに失敗しました: $e')));
+
+      setState(() {
+        _isTranscribingRemote = false;
+      });
       return null;
     }
   }
@@ -826,6 +901,36 @@ class _TranscribeCardState extends State<_TranscribeCard> {
     final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
     final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
     return '$minutes:$seconds';
+  }
+
+  Future<void> _retryRemoteTranscription() async {
+    final path = _recordedFilePath;
+
+    if (path == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('録音ファイルがありません。')));
+      return;
+    }
+
+    if (_isRecording) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('録音停止後に再文字起こしできます。')));
+      return;
+    }
+
+    final transcript = await _transcribeAudioFile(path, _selectedLanguage);
+
+    if (!mounted) return;
+
+    if (transcript != null && transcript.trim().isNotEmpty) {
+      setState(() {
+        _transcriptController.text = transcript;
+      });
+
+      widget.onTranscriptionCompleted(transcript);
+    }
   }
 
   @override
@@ -942,17 +1047,47 @@ class _TranscribeCardState extends State<_TranscribeCard> {
             ),
             const SizedBox(height: 14),
             if (_isRecording)
-              const Text(
-                '録音中は自動的に文字起こしされます。',
-                style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+              Text(
+                Platform.isAndroid ? '録音停止後に文字起こしされます。' : '録音中は自動的に文字起こしされます。',
+                style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
               ),
             const SizedBox(height: 14),
-            _FormField(
-              label: '文字起こし結果',
-              maxLines: 6,
-              controller: _transcriptController,
-              readOnly: _isTranscribing,
-            ),
+            if (_isTranscribingRemote)
+              const Row(
+                spacing: 12,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 3),
+                  ),
+                  Text('文字起こしを作成中です'),
+                ],
+              )
+            else
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _FormField(
+                    label: '文字起こし結果',
+                    maxLines: 6,
+                    controller: _transcriptController,
+                    readOnly: _isTranscribingRemote,
+                  ),
+                  const SizedBox(height: 10),
+                  OutlinedButton.icon(
+                    onPressed:
+                        _recordedFilePath != null &&
+                            !_isRecording &&
+                            !_isTranscribingRemote
+                        ? _retryRemoteTranscription
+                        : null,
+                    icon: const Icon(CupertinoIcons.arrow_clockwise),
+                    label: const Text('音声ファイルから再文字起こし'),
+                  ),
+                ],
+              ),
           ],
         ),
       ),

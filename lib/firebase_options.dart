@@ -17,10 +17,7 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -51,7 +48,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyD1K182tYI39fwohPhs3hAmRv8yzkMQky0',
-    appId: '1:514630778460:android:63dc988af6f1f2bc84b099',
+    appId: '1:514630778460:android:52997cdd384d4bfc84b099',
     messagingSenderId: '514630778460',
     projectId: 'surgery-counselling-memo',
     storageBucket: 'surgery-counselling-memo.firebasestorage.app',
@@ -64,6 +61,15 @@ class DefaultFirebaseOptions {
     projectId: 'surgery-counselling-memo',
     storageBucket: 'surgery-counselling-memo.firebasestorage.app',
     iosBundleId: 'com.noda.sklog',
+  );
+
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyC59TKk8jdwTjZONbmUiS4EIRcmKfLVNxA',
+    appId: '1:514630778460:web:6ceb05d78e9684c984b099',
+    messagingSenderId: '514630778460',
+    projectId: 'surgery-counselling-memo',
+    authDomain: 'surgery-counselling-memo.firebaseapp.com',
+    storageBucket: 'surgery-counselling-memo.firebasestorage.app',
   );
 
 }
