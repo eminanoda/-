@@ -28,21 +28,21 @@
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>音声メモを録音するためにマイクの利用を許可してください。</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>写真を選択します</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>録音音声を文字起こしするために音声認識を利用します。</string>
-    <key>NSPhotoLibraryUsageDescription</key>
-    <string>写真を選択します</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
+	<key>UIRequiresFullScreen</key>
+	<true/>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 	</array>
-    <key>UIRequiresFullScreen</key>
-    <true/>
 </dict>
 </plist>

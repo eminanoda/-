@@ -67,7 +67,7 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
       text: initialRecord?.doctor ?? '',
     );
     _dateController = TextEditingController(
-      text: initialRecord?.date ?? '2026 / 03 / 18',
+      text: initialRecord?.date ?? '${DateTime.now().year} / ${DateTime.now().month} / ${DateTime.now().day}',
     );
     _memoController = TextEditingController(text: initialRecord?.memo ?? '');
     _selectedLanguage = initialRecord?.language ?? '日本語';

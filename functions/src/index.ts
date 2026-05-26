@@ -1,9 +1,9 @@
-import * as functions from 'firebase-functions';
 import * as speech from '@google-cloud/speech';
 import { Request, Response } from 'express';
 import * as admin from 'firebase-admin';
 import Busboy from 'busboy';
 import * as path from 'path';
+import { randomUUID } from 'crypto';
 import { onRequest } from 'firebase-functions/v2/https';
 import { defineSecret } from 'firebase-functions/params';
 
@@ -28,6 +28,41 @@ function getEncodingFromExtension(ext: string): speech.protos.google.cloud.speec
   }
 }
 
+function getDefaultStorageBucketName(): string | undefined {
+
+  return 'surgery-counselling-memo.firebasestorage.app';
+}
+
+function buildRecognitionConfig(
+  ext: string,
+  language: string,
+): speech.protos.google.cloud.speech.v1.IRecognitionConfig {
+  return {
+    encoding: getEncodingFromExtension(ext),
+    sampleRateHertz: ext === '.wav' ? 16000 : undefined,
+    languageCode: language,
+    enableAutomaticPunctuation: true,
+  };
+}
+
+async function transcribeFromStorageUri(
+  gcsUri: string,
+  config: speech.protos.google.cloud.speech.v1.IRecognitionConfig,
+): Promise<string> {
+  const [operation] = await client.longRunningRecognize({
+    audio: { uri: gcsUri },
+    config,
+  });
+  const [response] = await operation.promise();
+
+  return (
+    response.results
+      ?.map((result) => result.alternatives?.[0]?.transcript)
+      .filter(Boolean)
+      .join(' ') || ''
+  );
+}
+
 function buildAiSummaryPrompt(transcript: string, language: string): string {
   const outputLanguage = language === 'ko-KR' ? 'Korean' : 'Japanese';
   return `
@@ -43,7 +78,11 @@ ${transcript}
 `.trim();
 }
 
-export const transcribeAudio = functions.https.onRequest(
+export const transcribeAudio = onRequest({
+    cpu: 2,           // 0.08〜8 vCPUの間で設定
+    memory: "2GiB",   // 128MiB〜32GiBの間で設定
+    region: "us-central1" // デプロイする地域
+  },
   async (req: Request, res: Response) => {
     if (req.method !== 'POST') {
       res.status(405).send('Method not allowed');
@@ -60,6 +99,7 @@ export const transcribeAudio = functions.https.onRequest(
 
     let audioBuffer: Buffer | null = null;
     let originalName = 'audio.wav';
+    let mimeType = 'audio/wav';
     let language = 'ja-JP';
 
     busboy.on('field', (fieldname, value) => {
@@ -75,6 +115,7 @@ export const transcribeAudio = functions.https.onRequest(
       }
 
       originalName = info.filename || 'audio.wav';
+      mimeType = info.mimeType || 'audio/wav';
 
       const chunks: Buffer[] = [];
 
@@ -103,25 +144,33 @@ export const transcribeAudio = functions.https.onRequest(
         }
 
         const ext = path.extname(originalName).toLowerCase();
-        const encoding = getEncodingFromExtension(ext);
+        const bucketName = getDefaultStorageBucketName();
 
-        const [response] = await client.recognize({
-          audio: {
-            content: audioBuffer.toString('base64'),
-          },
-          config: {
-            encoding,
-            sampleRateHertz: ext === '.wav' ? 16000 : undefined,
-            languageCode: language,
-            enableAutomaticPunctuation: true,
+        if (!bucketName) {
+          res.status(500).json({ message: 'Storage bucket is not configured' });
+          return;
+        }
+
+        const bucket = admin.storage().bucket(bucketName);
+        const objectName = `transcription-uploads/${randomUUID()}${ext || '.wav'}`;
+        const file = bucket.file(objectName);
+        const gcsUri = `gs://${bucket.name}/${objectName}`;
+        const config = buildRecognitionConfig(ext, language);
+
+        await file.save(audioBuffer, {
+          resumable: false,
+          contentType: mimeType,
+          metadata: {
+            cacheControl: 'no-store',
           },
         });
 
-        const transcription =
-          response.results
-            ?.map((result) => result.alternatives?.[0]?.transcript)
-            .filter(Boolean)
-            .join(' ') || '';
+        let transcription = '';
+        try {
+          transcription = await transcribeFromStorageUri(gcsUri, config);
+        } finally {
+          await file.delete({ ignoreNotFound: true });
+        }
 
         res.status(200).json({ transcript: transcription });
       } catch (error: any) {
@@ -161,6 +210,10 @@ export const summarizeCounseling = onRequest(
 
       if (!transcript) {
         res.status(400).json({ error: 'Transcript is required' });
+        return;
+      }
+      if (!apiKey) {
+        res.status(400).json({ error: 'apiKey is required' });
         return;
       }
 

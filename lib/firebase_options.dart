@@ -48,7 +48,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyD1K182tYI39fwohPhs3hAmRv8yzkMQky0',
-    appId: '1:514630778460:android:52997cdd384d4bfc84b099',
+    appId: '1:514630778460:android:4f50bc1de988993484b099',
     messagingSenderId: '514630778460',
     projectId: 'surgery-counselling-memo',
     storageBucket: 'surgery-counselling-memo.firebasestorage.app',
