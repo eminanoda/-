@@ -37,8 +37,7 @@ class _CounselingRecordDetailScreenState
   bool get _canPersist => widget.recordIndex != null;
 
   bool get _hasAudioFile {
-    final path = _record.audioFilePath;
-    return path != null && File(path).existsSync();
+    return _record.audioFileName != null;
   }
 
   bool get _hasTranscript => _record.transcript?.trim().isNotEmpty ?? false;
@@ -59,7 +58,7 @@ class _CounselingRecordDetailScreenState
   }
 
   Future<void> _retranscribe() async {
-    final path = _record.audioFilePath;
+    final path =await _record.audioFilePath();
     if (path == null || !File(path).existsSync()) {
       ScaffoldMessenger.of(
         context,
@@ -196,7 +195,9 @@ class _CounselingRecordDetailScreenState
                         if (_isSummarizing)
                           const _ProgressRow(label: 'AI要約を作成中です')
                         else if (_isTranscribing)
-                          const _ProgressRow(label: '文字起こしを作成中です\n（数分かかる場合があります）')
+                          const _ProgressRow(
+                            label: '文字起こしを作成中です\n（数分かかる場合があります）',
+                          )
                         else
                           FilledButton.icon(
                             onPressed: (isBusy || !_hasAudioFile)
@@ -305,9 +306,7 @@ class _AudioPlaybackCardState extends State<_AudioPlaybackCard> {
   Duration _duration = Duration.zero;
   Duration _position = Duration.zero;
 
-  bool get _hasAudioPath => widget.record.audioFilePath != null;
-  bool get _fileExists =>
-      _hasAudioPath && File(widget.record.audioFilePath!).existsSync();
+  bool get _hasAudioPath => widget.record.audioFileName != null;
 
   @override
   void initState() {
@@ -362,7 +361,7 @@ class _AudioPlaybackCardState extends State<_AudioPlaybackCard> {
   }
 
   Future<void> _togglePlayback() async {
-    final path = widget.record.audioFilePath;
+    final path =await widget.record.audioFilePath();
     if (path == null || !File(path).existsSync()) {
       return;
     }
@@ -411,13 +410,13 @@ class _AudioPlaybackCardState extends State<_AudioPlaybackCard> {
                 ),
               ),
               IconButton(
-                onPressed: _fileExists ? _togglePlayback : null,
+                onPressed: _hasAudioPath ? _togglePlayback : null,
                 icon: Icon(
                   _isPlaying
                       ? CupertinoIcons.pause_circle_fill
                       : CupertinoIcons.play_circle_fill,
                   size: 28,
-                  color: _fileExists
+                  color: _hasAudioPath
                       ? const Color(0xFF5672D9)
                       : const Color(0xFFB0BEC5),
                 ),
@@ -436,8 +435,8 @@ class _AudioPlaybackCardState extends State<_AudioPlaybackCard> {
           ),
           const SizedBox(height: 10),
           Text(
-            _fileExists
-                ? '${_formatDuration(_position)} / ${_formatDuration(_duration)}'
+            _hasAudioPath
+                ? '${_formatDuration(_position)} / ${widget.record.audioDuration}'
                 : widget.record.audioDuration != null
                 ? '再生準備済み: ${widget.record.audioDuration}'
                 : '再生準備中',

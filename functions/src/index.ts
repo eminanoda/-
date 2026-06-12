@@ -9,24 +9,17 @@ import { defineSecret } from 'firebase-functions/params';
 
 admin.initializeApp();
 
-const client = new speech.SpeechClient();
+// Speech-to-Text v2 API。リージョナルエンドポイント経由で利用する。
+const PROJECT_ID = 'surgery-counselling-memo';
+const SPEECH_LOCATION = 'us-central1';
+const SPEECH_MODEL = 'long';
+const RECOGNIZER = `projects/${PROJECT_ID}/locations/${SPEECH_LOCATION}/recognizers/_`;
+
+const client = new speech.v2.SpeechClient({
+  apiEndpoint: `${SPEECH_LOCATION}-speech.googleapis.com`,
+});
 const geminiModel = 'gemini-2.5-flash';
 const geminiApiKey = defineSecret('GEMINI_API_KEY');
-
-function getEncodingFromExtension(ext: string): speech.protos.google.cloud.speech.v1.RecognitionConfig.AudioEncoding {
-  switch (ext.toLowerCase()) {
-    case '.wav':
-      return speech.protos.google.cloud.speech.v1.RecognitionConfig.AudioEncoding.LINEAR16;
-    case '.flac':
-      return speech.protos.google.cloud.speech.v1.RecognitionConfig.AudioEncoding.FLAC;
-    case '.mp3':
-      return speech.protos.google.cloud.speech.v1.RecognitionConfig.AudioEncoding.MP3;
-    case '.ogg':
-      return speech.protos.google.cloud.speech.v1.RecognitionConfig.AudioEncoding.OGG_OPUS;
-    default:
-      return speech.protos.google.cloud.speech.v1.RecognitionConfig.AudioEncoding.LINEAR16;
-  }
-}
 
 function getDefaultStorageBucketName(): string | undefined {
 
@@ -34,29 +27,38 @@ function getDefaultStorageBucketName(): string | undefined {
 }
 
 function buildRecognitionConfig(
-  ext: string,
   language: string,
-): speech.protos.google.cloud.speech.v1.IRecognitionConfig {
+): speech.protos.google.cloud.speech.v2.IRecognitionConfig {
   return {
-    encoding: getEncodingFromExtension(ext),
-    sampleRateHertz: ext === '.wav' ? 16000 : undefined,
-    languageCode: language,
-    enableAutomaticPunctuation: true,
+    // エンコーディング/サンプルレートは音声ヘッダから自動判定させる。
+    autoDecodingConfig: {},
+    languageCodes: [language],
+    model: SPEECH_MODEL,
+    features: {
+      enableAutomaticPunctuation: true,
+    },
   };
 }
 
 async function transcribeFromStorageUri(
   gcsUri: string,
-  config: speech.protos.google.cloud.speech.v1.IRecognitionConfig,
+  config: speech.protos.google.cloud.speech.v2.IRecognitionConfig,
 ): Promise<string> {
-  const [operation] = await client.longRunningRecognize({
-    audio: { uri: gcsUri },
+  const [operation] = await client.batchRecognize({
+    recognizer: RECOGNIZER,
     config,
+    files: [{ uri: gcsUri }],
+    recognitionOutputConfig: {
+      inlineResponseConfig: {},
+    },
   });
   const [response] = await operation.promise();
+  console.log('response.results:', response.results);
+
+  const fileResult = response.results?.[gcsUri];
 
   return (
-    response.results
+    fileResult?.transcript?.results
       ?.map((result) => result.alternatives?.[0]?.transcript)
       .filter(Boolean)
       .join(' ') || ''
@@ -80,8 +82,8 @@ ${transcript}
 
 // https://console.cloud.google.com/run/detail/us-central1/transcribeaudio/observability/logs?project=surgery-counselling-memo
 export const transcribeAudio = onRequest({
-    cpu: 8,           // 0.08〜8 vCPUの間で設定
-    memory: "32GiB",   // 128MiB〜32GiBの間で設定
+    cpu: 4,           // 0.08〜8 vCPUの間で設定
+    memory: "16GiB",   // 128MiB〜32GiBの間で設定
     region: "us-central1" // デプロイする地域
   },
   async (req: Request, res: Response) => {
@@ -156,7 +158,7 @@ export const transcribeAudio = onRequest({
         const objectName = `transcription-uploads/${randomUUID()}${ext || '.wav'}`;
         const file = bucket.file(objectName);
         const gcsUri = `gs://${bucket.name}/${objectName}`;
-        const config = buildRecognitionConfig(ext, language);
+        const config = buildRecognitionConfig(language);
 
         await file.save(audioBuffer, {
           resumable: false,

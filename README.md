@@ -8,3 +8,10 @@ AI要約はアプリから直接 Gemini を呼ばず、Cloud Run 関数 `summari
 firebase functions:secrets:set GEMINI_API_KEY
 firebase deploy --only functions:summarizeCounseling
 ```
+
+音入ってても文字起こしされないファイルがある
+CloudRun呼んだ後にアップロードするのが遅い？
+
+DONE:
+スマホを閉じると録音終わる
+アプリ再起動すると音声ファイル消えてる

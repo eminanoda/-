@@ -67,13 +67,15 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
       text: initialRecord?.doctor ?? '',
     );
     _dateController = TextEditingController(
-      text: initialRecord?.date ?? '${DateTime.now().year} / ${DateTime.now().month} / ${DateTime.now().day}',
+      text:
+          initialRecord?.date ??
+          '${DateTime.now().year} / ${DateTime.now().month} / ${DateTime.now().day}',
     );
     _memoController = TextEditingController(text: initialRecord?.memo ?? '');
     _selectedLanguage = initialRecord?.language ?? '日本語';
     //_showPremiumPreview = initialRecord?.isPremium ?? false;
     _audioFileName = initialRecord?.audioFileName;
-    _audioFilePath = initialRecord?.audioFilePath;
+    //_audioFilePath = initialRecord?.audioFilePath;
     _audioDuration = initialRecord?.audioDuration;
     _transcript = initialRecord?.transcript;
     _aiSummary = initialRecord?.aiSummary;
@@ -143,7 +145,7 @@ class _CounselingRecordScreenState extends State<CounselingRecordScreen> {
       memo: _memoController.text.trim(),
       //isPremium: _showPremiumPreview,
       audioFileName: _audioFileName,
-      audioFilePath: _audioFilePath,
+      //audioFilePath: _audioFilePath,
       audioDuration: _audioDuration,
       transcript: _transcript,
       aiSummary: aiSummary,
@@ -594,6 +596,11 @@ class _TranscribeCardState extends State<_TranscribeCard> {
           encoder: AudioEncoder.wav,
           sampleRate: 16000,
           numChannels: 1,
+          // アプリがバックグラウンド・終了状態でも録音を継続させる。
+          // Android: フォアグラウンドサービス + 常駐通知で録音を維持する。
+          androidConfig: AndroidRecordConfig(
+            service: AndroidService(title: '録音中', content: 'カウンセリングを録音しています'),
+          ),
         ),
         path: path,
       );
@@ -728,11 +735,11 @@ class _TranscribeCardState extends State<_TranscribeCard> {
 
     await _speechToText.listen(
       onResult: _onSpeechResult,
-      localeId: _selectedLanguage == '日本語' ? 'ja_JP' : 'ko_KR',
-      listenFor: Duration(minutes: 60),
       listenOptions: SpeechListenOptions(
         partialResults: true,
         listenMode: ListenMode.dictation,
+        localeId: _selectedLanguage == '日本語' ? 'ja_JP' : 'ko_KR',
+        listenFor: Duration(minutes: 60),
       ),
     );
     if (!mounted) return;
@@ -1073,7 +1080,7 @@ class _TranscribeCardState extends State<_TranscribeCard> {
                     label: '文字起こし結果',
                     maxLines: 6,
                     controller: _transcriptController,
-                    readOnly: _isTranscribingRemote,
+                    readOnly: _isTranscribingRemote || _isTranscribing,
                   ),
                   const SizedBox(height: 10),
                   OutlinedButton.icon(

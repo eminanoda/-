@@ -13,7 +13,7 @@ class CounselingRecord {
     required this.memo,
     //required this.isPremium,
     this.audioFileName,
-    this.audioFilePath,
+    //this.audioFilePath,
     this.audioDuration,
     this.transcript,
     this.aiSummary,
@@ -38,7 +38,7 @@ class CounselingRecord {
       language: language ?? this.language,
       memo: memo ?? this.memo,
       audioFileName: audioFileName ?? this.audioFileName,
-      audioFilePath: audioFilePath ?? this.audioFilePath,
+      //audioFilePath: audioFilePath ?? this.audioFilePath,
       audioDuration: audioDuration ?? this.audioDuration,
       transcript: transcript ?? this.transcript,
       aiSummary: aiSummary ?? this.aiSummary,
@@ -53,7 +53,7 @@ class CounselingRecord {
     'memo': memo,
     //'isPremium': isPremium,
     if (audioFileName != null) 'audioFileName': audioFileName,
-    if (audioFilePath != null) 'audioFilePath': audioFilePath,
+    //if (audioFilePath != null) 'audioFilePath': audioFilePath,
     if (audioDuration != null) 'audioDuration': audioDuration,
     if (transcript != null) 'transcript': transcript,
     if (aiSummary != null) 'aiSummary': aiSummary,
@@ -68,7 +68,7 @@ class CounselingRecord {
       memo: json['memo'] as String,
       //isPremium: json['isPremium'] as bool,
       audioFileName: json['audioFileName'] as String?,
-      audioFilePath: json['audioFilePath'] as String?,
+      //audioFilePath: json['audioFilePath'] as String?,
       audioDuration: json['audioDuration'] as String?,
       transcript: json['transcript'] as String?,
       aiSummary: json['aiSummary'] as String?,
@@ -82,10 +82,18 @@ class CounselingRecord {
   final String memo;
   //final bool isPremium;
   final String? audioFileName;
-  final String? audioFilePath;
+  //final String? audioFilePath;
   final String? audioDuration;
   final String? transcript;
   final String? aiSummary;
+
+  Future<String?> audioFilePath() async {
+    if (audioFileName == null) {
+      return null;
+    }
+    final directory = await getApplicationDocumentsDirectory();
+    return '${directory.path}/$audioFileName';
+  }
 }
 
 const _recordsStorageFileName = 'counseling_records.json';
