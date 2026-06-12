@@ -5,7 +5,7 @@
   "packages": [
     {
       "name": "surgery_memo",
-      "version": "0.1.0",
+      "version": "0.1.0+2",
       "dependencies": [
         "audioplayers",
         "cupertino_icons",

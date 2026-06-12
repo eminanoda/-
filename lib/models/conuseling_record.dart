@@ -19,6 +19,32 @@ class CounselingRecord {
     this.aiSummary,
   });
 
+  CounselingRecord copyWith({
+    String? clinic,
+    String? doctor,
+    String? date,
+    String? language,
+    String? memo,
+    String? audioFileName,
+    String? audioFilePath,
+    String? audioDuration,
+    String? transcript,
+    String? aiSummary,
+  }) {
+    return CounselingRecord(
+      clinic: clinic ?? this.clinic,
+      doctor: doctor ?? this.doctor,
+      date: date ?? this.date,
+      language: language ?? this.language,
+      memo: memo ?? this.memo,
+      audioFileName: audioFileName ?? this.audioFileName,
+      audioFilePath: audioFilePath ?? this.audioFilePath,
+      audioDuration: audioDuration ?? this.audioDuration,
+      transcript: transcript ?? this.transcript,
+      aiSummary: aiSummary ?? this.aiSummary,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
     'clinic': clinic,
     'doctor': doctor,

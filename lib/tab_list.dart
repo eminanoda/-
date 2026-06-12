@@ -178,8 +178,10 @@ class _RecordsListScreenState extends State<RecordsListScreen> {
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute<void>(
-                          builder: (_) =>
-                              CounselingRecordDetailScreen(record: record),
+                          builder: (_) => CounselingRecordDetailScreen(
+                            record: record,
+                            recordIndex: recordIndex,
+                          ),
                         ),
                       );
                     },

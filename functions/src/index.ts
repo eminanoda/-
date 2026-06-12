@@ -78,9 +78,10 @@ ${transcript}
 `.trim();
 }
 
+// https://console.cloud.google.com/run/detail/us-central1/transcribeaudio/observability/logs?project=surgery-counselling-memo
 export const transcribeAudio = onRequest({
-    cpu: 2,           // 0.08〜8 vCPUの間で設定
-    memory: "2GiB",   // 128MiB〜32GiBの間で設定
+    cpu: 8,           // 0.08〜8 vCPUの間で設定
+    memory: "32GiB",   // 128MiB〜32GiBの間で設定
     region: "us-central1" // デプロイする地域
   },
   async (req: Request, res: Response) => {
@@ -165,12 +166,16 @@ export const transcribeAudio = onRequest({
           },
         });
 
+        console.log('transcription.gcsUri:', gcsUri);
+
         let transcription = '';
         try {
           transcription = await transcribeFromStorageUri(gcsUri, config);
         } finally {
-          await file.delete({ ignoreNotFound: true });
+          //todo await file.delete({ ignoreNotFound: true });
         }
+
+        console.log('transcription:', transcription);
 
         res.status(200).json({ transcript: transcription });
       } catch (error: any) {

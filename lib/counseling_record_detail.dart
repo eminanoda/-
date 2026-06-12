@@ -4,16 +4,147 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'models/conuseling_record.dart';
+import 'services/transcription_service.dart';
 import 'widgets/premium_ai_summary_card.dart';
 
-class CounselingRecordDetailScreen extends StatelessWidget {
-  const CounselingRecordDetailScreen({super.key, required this.record});
+class CounselingRecordDetailScreen extends StatefulWidget {
+  const CounselingRecordDetailScreen({
+    super.key,
+    required this.record,
+    this.recordIndex,
+  });
 
   final CounselingRecord record;
+  final int? recordIndex;
+
+  @override
+  State<CounselingRecordDetailScreen> createState() =>
+      _CounselingRecordDetailScreenState();
+}
+
+class _CounselingRecordDetailScreenState
+    extends State<CounselingRecordDetailScreen> {
+  late CounselingRecord _record;
+  bool _isTranscribing = false;
+  bool _isSummarizing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _record = widget.record;
+  }
+
+  bool get _canPersist => widget.recordIndex != null;
+
+  bool get _hasAudioFile {
+    final path = _record.audioFilePath;
+    return path != null && File(path).existsSync();
+  }
+
+  bool get _hasTranscript => _record.transcript?.trim().isNotEmpty ?? false;
+
+  Future<void> _persist(CounselingRecord updated) async {
+    setState(() {
+      _record = updated;
+    });
+    if (!_canPersist) return;
+    try {
+      await updateCounselingRecordAt(widget.recordIndex!, updated);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('保存に失敗しました: $error')));
+    }
+  }
+
+  Future<void> _retranscribe() async {
+    final path = _record.audioFilePath;
+    if (path == null || !File(path).existsSync()) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('音声ファイルが見つかりません。')));
+      return;
+    }
+
+    setState(() {
+      _isTranscribing = true;
+    });
+    try {
+      final transcript = await transcribeAudioFile(path, _record.language);
+      if (!mounted) return;
+      if (transcript == null || transcript.trim().isEmpty) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('文字起こし結果が空でした。')));
+        return;
+      }
+      await _persist(_record.copyWith(transcript: transcript));
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('文字起こしを更新しました')));
+
+      _regenerateSummary();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('文字起こしに失敗しました: $error')));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isTranscribing = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _regenerateSummary() async {
+    final transcript = _record.transcript;
+    if (transcript == null || transcript.trim().isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('先に文字起こしを作成してください。')));
+      return;
+    }
+
+    setState(() {
+      _isSummarizing = true;
+    });
+    try {
+      final summary = await fetchAiSummary(transcript, _record.language);
+      if (!mounted) return;
+      if (summary == null || summary.trim().isEmpty) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('要約結果が空でした。')));
+        return;
+      }
+      await _persist(_record.copyWith(aiSummary: summary));
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('AI要約を更新しました')));
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('AI要約に失敗しました: $error')));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSummarizing = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final record = _record;
+    final isBusy = _isTranscribing || _isSummarizing;
 
     return Scaffold(
       appBar: AppBar(title: const Text('カウンセリング記録')),
@@ -62,17 +193,56 @@ class CounselingRecordDetailScreen extends StatelessWidget {
                                 record.transcript!,
                                 style: theme.textTheme.bodyLarge,
                               ),
+                        if (_isSummarizing)
+                          const _ProgressRow(label: 'AI要約を作成中です')
+                        else if (_isTranscribing)
+                          const _ProgressRow(label: '文字起こしを作成中です\n（数分かかる場合があります）')
+                        else
+                          FilledButton.icon(
+                            onPressed: (isBusy || !_hasAudioFile)
+                                ? null
+                                : _retranscribe,
+                            icon: const Icon(CupertinoIcons.arrow_clockwise),
+                            label: Text(
+                              '文字起こし / AI要約を${_hasTranscript ? '再' : ''}実行',
+                            ),
+                          ),
                       ],
                     ),
             ),
             const SizedBox(height: 14),
             _DetailSection(
               title: 'メモ',
-              child: Text(record.memo.isEmpty ? 'メモがありません' : record.memo, style: theme.textTheme.bodyLarge),
+              child: Text(
+                record.memo.isEmpty ? 'メモがありません' : record.memo,
+                style: theme.textTheme.bodyLarge,
+              ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _ProgressRow extends StatelessWidget {
+  const _ProgressRow({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(strokeWidth: 3),
+        ),
+        const SizedBox(width: 12),
+        Text(label),
+      ],
     );
   }
 }
@@ -163,9 +333,9 @@ class _AudioPlaybackCardState extends State<_AudioPlaybackCard> {
     });
     try {
       if (widget.record.audioDuration != null) {
-      _duration = parseDuration(widget.record.audioDuration!);
-    }
-    }catch(e){
+        _duration = parseDuration(widget.record.audioDuration!);
+      }
+    } catch (e) {
       debugPrint('failed to parse ${widget.record.audioDuration}');
     }
   }

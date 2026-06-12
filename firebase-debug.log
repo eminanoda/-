@@ -1,0 +1,170 @@
+[debug] [2026-06-12T04:41:51.791Z] ----------------------------------------------------------------------
+[debug] [2026-06-12T04:41:51.798Z] Command:       /Users/tenna/.nodebrew/node/v22.2.0/bin/node /Users/tenna/.nodebrew/current/bin/firebase deploy --only functions
+[debug] [2026-06-12T04:41:51.798Z] CLI Version:   15.17.0
+[debug] [2026-06-12T04:41:51.798Z] Platform:      darwin
+[debug] [2026-06-12T04:41:51.798Z] Node Version:  v22.2.0
+[debug] [2026-06-12T04:41:51.798Z] Time:          Fri Jun 12 2026 13:41:51 GMT+0900 (Japan Standard Time)
+[debug] [2026-06-12T04:41:51.798Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-06-12T04:41:51.799Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[debug] [2026-06-12T04:41:52.900Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"flutter"}
+[debug] [2026-06-12T04:41:52.905Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-06-12T04:41:52.905Z] > authorizing via signed-in user (tenna.churiki@gmail.com)
+[debug] [2026-06-12T04:41:52.905Z] [iam] checking project surgery-counselling-memo for permissions ["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]
+[debug] [2026-06-12T04:41:52.905Z] Checked if tokens are valid: false, expires at: 1781141401830
+[debug] [2026-06-12T04:41:52.905Z] Checked if tokens are valid: false, expires at: 1781141401830
+[debug] [2026-06-12T04:41:52.905Z] > refreshing access token with scopes: []
+[debug] [2026-06-12T04:41:52.906Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-06-12T04:41:52.906Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-06-12T04:41:58.428Z] <<< [apiv2][status] GET https://firebase-public.firebaseio.com/cli.json 200
+[debug] [2026-06-12T04:41:58.428Z] <<< [apiv2][body] GET https://firebase-public.firebaseio.com/cli.json {"cloudBuildErrorAfter":1594252800000,"cloudBuildWarnAfter":1590019200000,"defaultNode10After":1594252800000,"minVersion":"3.0.5","node8DeploysDisabledAfter":1613390400000,"node8RuntimeDisabledAfter":1615809600000,"node8WarnAfter":1600128000000}
+[debug] [2026-06-12T04:41:58.452Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-06-12T04:41:58.452Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-06-12T04:41:58.466Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/surgery-counselling-memo:testIamPermissions [none]
+[debug] [2026-06-12T04:41:58.466Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/surgery-counselling-memo:testIamPermissions  x-goog-user-project=surgery-counselling-memo
+[debug] [2026-06-12T04:41:58.466Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/surgery-counselling-memo:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2026-06-12T04:42:00.916Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/surgery-counselling-memo:testIamPermissions 200
+[debug] [2026-06-12T04:42:00.917Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/surgery-counselling-memo:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2026-06-12T04:42:00.917Z] Checked if tokens are valid: true, expires at: 1781242917453
+[debug] [2026-06-12T04:42:00.917Z] Checked if tokens are valid: true, expires at: 1781242917453
+[debug] [2026-06-12T04:42:00.917Z] >>> [apiv2][query] POST https://iam.googleapis.com/v1/projects/surgery-counselling-memo/serviceAccounts/surgery-counselling-memo@appspot.gserviceaccount.com:testIamPermissions [none]
+[debug] [2026-06-12T04:42:00.917Z] >>> [apiv2][body] POST https://iam.googleapis.com/v1/projects/surgery-counselling-memo/serviceAccounts/surgery-counselling-memo@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[debug] [2026-06-12T04:42:02.089Z] <<< [apiv2][status] POST https://iam.googleapis.com/v1/projects/surgery-counselling-memo/serviceAccounts/surgery-counselling-memo@appspot.gserviceaccount.com:testIamPermissions 200
+[debug] [2026-06-12T04:42:02.089Z] <<< [apiv2][body] POST https://iam.googleapis.com/v1/projects/surgery-counselling-memo/serviceAccounts/surgery-counselling-memo@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[info] 
+[info] === Deploying to 'surgery-counselling-memo'...
+[info] 
+[info] i  deploying functions 
+[info] Running command: npm --prefix "$RESOURCE_DIR" run build
+[info] ✔  functions: Finished running predeploy script. 
+[debug] [2026-06-12T04:42:04.363Z] Checked if tokens are valid: true, expires at: 1781242917453
+[debug] [2026-06-12T04:42:04.363Z] Checked if tokens are valid: true, expires at: 1781242917453
+[debug] [2026-06-12T04:42:04.364Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/surgery-counselling-memo [none]
+[debug] [2026-06-12T04:42:04.710Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/surgery-counselling-memo 200
+[debug] [2026-06-12T04:42:04.711Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/surgery-counselling-memo {"projectNumber":"514630778460","projectId":"surgery-counselling-memo","lifecycleState":"ACTIVE","name":"SKLog","labels":{"firebase":"enabled","firebase-core":"disabled"},"createTime":"2026-03-29T03:41:03.201Z"}
+[info] i  functions: preparing codebase default for deployment 
+[info] i  functions: ensuring required API cloudfunctions.googleapis.com is enabled... 
+[info] i  functions: ensuring required API cloudbuild.googleapis.com is enabled... 
+[info] i  artifactregistry: ensuring required API artifactregistry.googleapis.com is enabled... 
+[debug] [2026-06-12T04:42:04.712Z] Checked if tokens are valid: true, expires at: 1781242917453
+[debug] [2026-06-12T04:42:04.712Z] Checked if tokens are valid: true, expires at: 1781242917453
+[debug] [2026-06-12T04:42:04.712Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/surgery-counselling-memo/adminSdkConfig [none]
+[debug] [2026-06-12T04:42:05.794Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/surgery-counselling-memo/adminSdkConfig 200
+[debug] [2026-06-12T04:42:05.794Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/surgery-counselling-memo/adminSdkConfig {"projectId":"surgery-counselling-memo","storageBucket":"surgery-counselling-memo.firebasestorage.app"}
+[debug] [2026-06-12T04:42:05.795Z] Checked if tokens are valid: true, expires at: 1781242917453
+[debug] [2026-06-12T04:42:05.795Z] Checked if tokens are valid: true, expires at: 1781242917453
+[debug] [2026-06-12T04:42:05.795Z] >>> [apiv2][query] GET https://runtimeconfig.googleapis.com/v1beta1/projects/surgery-counselling-memo/configs [none]
+[debug] [2026-06-12T04:42:06.426Z] <<< [apiv2][status] GET https://runtimeconfig.googleapis.com/v1beta1/projects/surgery-counselling-memo/configs 200
+[debug] [2026-06-12T04:42:06.427Z] <<< [apiv2][body] GET https://runtimeconfig.googleapis.com/v1beta1/projects/surgery-counselling-memo/configs {}
+[debug] [2026-06-12T04:42:06.430Z] Validating nodejs source
+[warn] ⚠  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[warn] ⚠  functions: Please note that there will be breaking changes when you upgrade. 
+[debug] [2026-06-12T04:42:07.057Z] > [functions] package.json contents: {
+  "name": "functions",
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "shell": "npm run build && firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "22"
+  },
+  "main": "lib/index.js",
+  "dependencies": {
+    "@google-cloud/speech": "^6.6.0",
+    "busboy": "^1.6.0",
+    "firebase-admin": "^12.6.0",
+    "firebase-functions": "^6.0.1",
+    "google-auth-library": "^10.0.0",
+    "multer": "^1.4.5-lts.1"
+  },
+  "devDependencies": {
+    "@types/busboy": "^1.5.4",
+    "@types/multer": "^1.4.11",
+    "firebase-functions-test": "^3.1.0",
+    "typescript": "^4.9.0"
+  },
+  "private": true
+}
+[debug] [2026-06-12T04:42:07.057Z] Building nodejs source
+[info] i  functions: Loading and analyzing source code for codebase default to determine what to deploy 
+[debug] [2026-06-12T04:42:07.058Z] Could not find functions.yaml. Must use http discovery
+[debug] [2026-06-12T04:42:07.068Z] Found firebase-functions binary at '/Users/tenna/Desktop/surgery-counselling/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8541
+
+[error] (node:35575) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[debug] [2026-06-12T04:42:07.549Z] Got response from /__/functions.yaml {"endpoints":{"transcribeAudio":{"availableMemoryMb":32768,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","cpu":2,"region":["us-central1"],"labels":{},"httpsTrigger":{},"entryPoint":"transcribeAudio"},"summarizeCounseling":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","secretEnvironmentVariables":[{"key":"GEMINI_API_KEY"}],"labels":{},"httpsTrigger":{},"entryPoint":"summarizeCounseling"}},"specVersion":"v1alpha1","requiredAPIs":[],"extensions":{},"params":[{"type":"secret","name":"GEMINI_API_KEY"}]}
+[info] i  extensions: ensuring required API firebaseextensions.googleapis.com is enabled... 
+[debug] [2026-06-12T04:42:12.600Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-06-12T04:42:12.601Z] > authorizing via signed-in user (tenna.churiki@gmail.com)
+[debug] [2026-06-12T04:42:12.601Z] [iam] checking project surgery-counselling-memo for permissions ["firebase.projects.get","firebaseextensions.instances.list"]
+[debug] [2026-06-12T04:42:12.602Z] Checked if tokens are valid: true, expires at: 1781242917453
+[debug] [2026-06-12T04:42:12.602Z] Checked if tokens are valid: true, expires at: 1781242917453
+[debug] [2026-06-12T04:42:12.602Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/surgery-counselling-memo:testIamPermissions [none]
+[debug] [2026-06-12T04:42:12.602Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/surgery-counselling-memo:testIamPermissions  x-goog-user-project=surgery-counselling-memo
+[debug] [2026-06-12T04:42:12.602Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/surgery-counselling-memo:testIamPermissions {"permissions":["firebase.projects.get","firebaseextensions.instances.list"]}
+[debug] [2026-06-12T04:42:13.817Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/surgery-counselling-memo:testIamPermissions 200
+[debug] [2026-06-12T04:42:13.817Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/surgery-counselling-memo:testIamPermissions {"permissions":["firebase.projects.get","firebaseextensions.instances.list"]}
+[debug] [2026-06-12T04:42:13.817Z] Checked if tokens are valid: true, expires at: 1781242917453
+[debug] [2026-06-12T04:42:13.817Z] Checked if tokens are valid: true, expires at: 1781242917453
+[debug] [2026-06-12T04:42:13.818Z] >>> [apiv2][query] GET https://firebaseextensions.googleapis.com/v1beta/projects/surgery-counselling-memo/instances pageSize=100&pageToken=
+[debug] [2026-06-12T04:42:14.827Z] <<< [apiv2][status] GET https://firebaseextensions.googleapis.com/v1beta/projects/surgery-counselling-memo/instances 200
+[debug] [2026-06-12T04:42:14.827Z] <<< [apiv2][body] GET https://firebaseextensions.googleapis.com/v1beta/projects/surgery-counselling-memo/instances {}
+[debug] [2026-06-12T04:42:14.831Z] Checked if tokens are valid: true, expires at: 1781242917453
+[debug] [2026-06-12T04:42:14.831Z] Checked if tokens are valid: true, expires at: 1781242917453
+[debug] [2026-06-12T04:42:14.831Z] >>> [apiv2][query] GET https://secretmanager.googleapis.com/v1/projects/surgery-counselling-memo/secrets/GEMINI_API_KEY [none]
+[debug] [2026-06-12T04:42:15.241Z] <<< [apiv2][status] GET https://secretmanager.googleapis.com/v1/projects/surgery-counselling-memo/secrets/GEMINI_API_KEY 200
+[debug] [2026-06-12T04:42:15.241Z] <<< [apiv2][body] GET https://secretmanager.googleapis.com/v1/projects/surgery-counselling-memo/secrets/GEMINI_API_KEY {"name":"projects/514630778460/secrets/GEMINI_API_KEY","replication":{"automatic":{}},"createTime":"2026-04-15T02:30:48.012194Z","labels":{"firebase-managed":"functions"},"etag":"\"164f7680fbb696\""}
+[debug] [2026-06-12T04:42:15.242Z] Checked if tokens are valid: true, expires at: 1781242917453
+[debug] [2026-06-12T04:42:15.242Z] Checked if tokens are valid: true, expires at: 1781242917453
+[debug] [2026-06-12T04:42:15.242Z] >>> [apiv2][query] GET https://secretmanager.googleapis.com/v1/projects/surgery-counselling-memo/secrets/GEMINI_API_KEY/versions/latest [none]
+[debug] [2026-06-12T04:42:15.487Z] <<< [apiv2][status] GET https://secretmanager.googleapis.com/v1/projects/surgery-counselling-memo/secrets/GEMINI_API_KEY/versions/latest 200
+[debug] [2026-06-12T04:42:15.487Z] <<< [apiv2][body] GET https://secretmanager.googleapis.com/v1/projects/surgery-counselling-memo/secrets/GEMINI_API_KEY/versions/latest {"name":"projects/514630778460/secrets/GEMINI_API_KEY/versions/3","createTime":"2026-06-06T01:55:14.011744Z","state":"ENABLED","replicationStatus":{"automatic":{}},"etag":"\"16538c117a3260\""}
+[info] i  functions: preparing functions directory for uploading... 
+[info] i  functions: packaged /Users/tenna/Desktop/surgery-counselling/functions (82.04 KB) for uploading 
+[debug] [2026-06-12T04:42:15.568Z] Checked if tokens are valid: true, expires at: 1781242917453
+[debug] [2026-06-12T04:42:15.569Z] Checked if tokens are valid: true, expires at: 1781242917453
+[debug] [2026-06-12T04:42:15.569Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v1/projects/surgery-counselling-memo/locations/-/functions [none]
+[debug] [2026-06-12T04:42:16.775Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v1/projects/surgery-counselling-memo/locations/-/functions 200
+[debug] [2026-06-12T04:42:16.776Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v1/projects/surgery-counselling-memo/locations/-/functions {}
+[debug] [2026-06-12T04:42:16.778Z] Checked if tokens are valid: true, expires at: 1781242917453
+[debug] [2026-06-12T04:42:16.778Z] Checked if tokens are valid: true, expires at: 1781242917453
+[debug] [2026-06-12T04:42:16.778Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/surgery-counselling-memo/locations/-/functions filter=environment%3D%22GEN_2%22
+[debug] [2026-06-12T04:42:18.243Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/surgery-counselling-memo/locations/-/functions 200
+[debug] [2026-06-12T04:42:18.244Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/surgery-counselling-memo/locations/-/functions {"functions":[{"name":"projects/surgery-counselling-memo/locations/us-central1/functions/transcribeAudio","buildConfig":{"build":"projects/514630778460/locations/us-central1/builds/f3563801-6150-4e21-839e-73014a3586d9","runtime":"nodejs22","entryPoint":"transcribeAudio","source":{"storageSource":{"bucket":"gcf-v2-sources-514630778460-us-central1","object":"transcribeAudio/function-source.zip","generation":"1779755204207081"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRepository":"projects/surgery-counselling-memo/locations/us-central1/repositories/gcf-artifacts","sourceProvenance":{"resolvedStorageSource":{"bucket":"gcf-v2-sources-514630778460-us-central1","object":"transcribeAudio/function-source.zip","generation":"1779755204207081"}},"dockerRegistry":"ARTIFACT_REGISTRY","serviceAccount":"projects/surgery-counselling-memo/serviceAccounts/514630778460-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/surgery-counselling-memo/locations/us-central1/services/transcribeaudio","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"surgery-counselling-memo\",\"storageBucket\":\"surgery-counselling-memo.firebasestorage.app\"}","GCLOUD_PROJECT":"surgery-counselling-memo","EVENTARC_CLOUD_EVENT_SOURCE":"projects/surgery-counselling-memo/locations/us-central1/services/transcribeAudio","FUNCTION_TARGET":"transcribeAudio","LOG_EXECUTION_ID":"true"},"maxInstanceCount":10,"ingressSettings":"ALLOW_ALL","uri":"https://transcribeaudio-4u32ph45oa-uc.a.run.app","serviceAccountEmail":"514630778460-compute@developer.gserviceaccount.com","availableMemory":"2Gi","allTrafficOnLatestRevision":true,"revision":"transcribeaudio-00006-mim","maxInstanceRequestConcurrency":80,"availableCpu":"2"},"state":"ACTIVE","updateTime":"2026-05-26T00:27:53.801271779Z","labels":{"deployment-tool":"cli-firebase","firebase-functions-hash":"348b0e4f0aab3553d117f128777963a1803b1997"},"environment":"GEN_2","url":"https://us-central1-surgery-counselling-memo.cloudfunctions.net/transcribeAudio","createTime":"2026-04-10T00:28:10.410285409Z","satisfiesPzi":true},{"name":"projects/surgery-counselling-memo/locations/us-central1/functions/summarizeCounseling","buildConfig":{"build":"projects/514630778460/locations/us-central1/builds/ac9a5851-2065-441e-8cce-28583d8a84dc","runtime":"nodejs22","entryPoint":"summarizeCounseling","source":{"storageSource":{"bucket":"gcf-v2-sources-514630778460-us-central1","object":"summarizeCounseling/function-source.zip","generation":"1780710921375039"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRepository":"projects/surgery-counselling-memo/locations/us-central1/repositories/gcf-artifacts","sourceProvenance":{"resolvedStorageSource":{"bucket":"gcf-v2-sources-514630778460-us-central1","object":"summarizeCounseling/function-source.zip","generation":"1780710921375039"}},"dockerRegistry":"ARTIFACT_REGISTRY","serviceAccount":"projects/surgery-counselling-memo/serviceAccounts/514630778460-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/surgery-counselling-memo/locations/us-central1/services/summarizecounseling","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"surgery-counselling-memo\",\"storageBucket\":\"surgery-counselling-memo.firebasestorage.app\"}","GCLOUD_PROJECT":"surgery-counselling-memo","EVENTARC_CLOUD_EVENT_SOURCE":"projects/surgery-counselling-memo/locations/REGION_TBD/services/summarizeCounseling","FUNCTION_TARGET":"summarizeCounseling","LOG_EXECUTION_ID":"true","FUNCTION_SIGNATURE_TYPE":"http"},"maxInstanceCount":20,"ingressSettings":"ALLOW_ALL","uri":"https://summarizecounseling-4u32ph45oa-uc.a.run.app","serviceAccountEmail":"514630778460-compute@developer.gserviceaccount.com","availableMemory":"256Mi","allTrafficOnLatestRevision":true,"secretEnvironmentVariables":[{"key":"GEMINI_API_KEY","projectId":"surgery-counselling-memo","secret":"GEMINI_API_KEY","version":"3"}],"revision":"summarizecounseling-00012-qay","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"state":"ACTIVE","updateTime":"2026-06-06T01:56:11.849658382Z","labels":{"deployment-tool":"cli-firebase","firebase-functions-hash":"9f143dc476e345a9cf75b4e92b504bc1c5e96c70"},"environment":"GEN_2","url":"https://us-central1-surgery-counselling-memo.cloudfunctions.net/summarizeCounseling","createTime":"2026-04-15T02:32:11.928558125Z","satisfiesPzi":true}]}
+[info] i  functions: ensuring required API run.googleapis.com is enabled... 
+[info] i  functions: ensuring required API eventarc.googleapis.com is enabled... 
+[info] i  functions: ensuring required API pubsub.googleapis.com is enabled... 
+[info] i  functions: ensuring required API storage.googleapis.com is enabled... 
+[info] i  functions: generating the service identity for pubsub.googleapis.com... 
+[debug] [2026-06-12T04:42:18.250Z] Checked if tokens are valid: true, expires at: 1781242917453
+[debug] [2026-06-12T04:42:18.250Z] Checked if tokens are valid: true, expires at: 1781242917453
+[info] i  functions: generating the service identity for eventarc.googleapis.com... 
+[debug] [2026-06-12T04:42:18.250Z] Checked if tokens are valid: true, expires at: 1781242917453
+[debug] [2026-06-12T04:42:18.250Z] Checked if tokens are valid: true, expires at: 1781242917453
+[debug] [2026-06-12T04:42:18.250Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1beta1/projects/514630778460/services/pubsub.googleapis.com:generateServiceIdentity [none]
+[debug] [2026-06-12T04:42:18.250Z] >>> [apiv2][(partial)header] POST https://serviceusage.googleapis.com/v1beta1/projects/514630778460/services/pubsub.googleapis.com:generateServiceIdentity  x-goog-user-project=514630778460
+[debug] [2026-06-12T04:42:18.250Z] >>> [apiv2][body] POST https://serviceusage.googleapis.com/v1beta1/projects/514630778460/services/pubsub.googleapis.com:generateServiceIdentity {}
+[debug] [2026-06-12T04:42:18.251Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1beta1/projects/514630778460/services/eventarc.googleapis.com:generateServiceIdentity [none]
+[debug] [2026-06-12T04:42:18.251Z] >>> [apiv2][(partial)header] POST https://serviceusage.googleapis.com/v1beta1/projects/514630778460/services/eventarc.googleapis.com:generateServiceIdentity  x-goog-user-project=514630778460
+[debug] [2026-06-12T04:42:18.251Z] >>> [apiv2][body] POST https://serviceusage.googleapis.com/v1beta1/projects/514630778460/services/eventarc.googleapis.com:generateServiceIdentity {}
+[debug] [2026-06-12T04:42:19.642Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1beta1/projects/514630778460/services/eventarc.googleapis.com:generateServiceIdentity 200
+[debug] [2026-06-12T04:42:19.643Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1beta1/projects/514630778460/services/eventarc.googleapis.com:generateServiceIdentity {"name":"operations/finished.DONE_OPERATION","done":true,"response":{"@type":"type.googleapis.com/google.api.serviceusage.v1beta1.ServiceIdentity","email":"service-514630778460@gcp-sa-eventarc.iam.gserviceaccount.com","uniqueId":"117821145875977131390"}}
+[debug] [2026-06-12T04:42:19.644Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1beta1/projects/514630778460/services/pubsub.googleapis.com:generateServiceIdentity 200
+[debug] [2026-06-12T04:42:19.644Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1beta1/projects/514630778460/services/pubsub.googleapis.com:generateServiceIdentity {"name":"operations/finished.DONE_OPERATION","done":true,"response":{"@type":"type.googleapis.com/google.api.serviceusage.v1beta1.ServiceIdentity","email":"service-514630778460@gcp-sa-pubsub.iam.gserviceaccount.com","uniqueId":"115971160255858615372"}}
+[info] i  functions: ensuring required API secretmanager.googleapis.com is enabled... 
+[debug] [2026-06-12T04:42:19.648Z] Checked if tokens are valid: true, expires at: 1781242917453
+[debug] [2026-06-12T04:42:19.648Z] Checked if tokens are valid: true, expires at: 1781242917453
+[debug] [2026-06-12T04:42:19.648Z] >>> [apiv2][query] GET https://secretmanager.googleapis.com/v1/projects/surgery-counselling-memo/secrets/GEMINI_API_KEY/versions/latest [none]
+[debug] [2026-06-12T04:42:19.918Z] <<< [apiv2][status] GET https://secretmanager.googleapis.com/v1/projects/surgery-counselling-memo/secrets/GEMINI_API_KEY/versions/latest 200
+[debug] [2026-06-12T04:42:19.918Z] <<< [apiv2][body] GET https://secretmanager.googleapis.com/v1/projects/surgery-counselling-memo/secrets/GEMINI_API_KEY/versions/latest {"name":"projects/514630778460/secrets/GEMINI_API_KEY/versions/3","createTime":"2026-06-06T01:55:14.011744Z","state":"ENABLED","replicationStatus":{"automatic":{}},"etag":"\"16538c117a3260\""}
+[debug] [2026-06-12T04:42:19.919Z] Resolved secret version of GEMINI_API_KEY to 3.
+[debug] [2026-06-12T04:42:19.922Z] Checked if tokens are valid: true, expires at: 1781242917453
+[debug] [2026-06-12T04:42:19.922Z] Checked if tokens are valid: true, expires at: 1781242917453
+[debug] [2026-06-12T04:42:19.922Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/surgery-counselling-memo [none]
