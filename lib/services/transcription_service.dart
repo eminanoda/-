@@ -1,31 +1,28 @@
 import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:http_parser/http_parser.dart';
 
 /// Cloud Run endpoint for the speech-to-text service.
-const String _cloudRunUrl = 'https://transcribeaudio-4u32ph45oa-uc.a.run.app';
+const String cloudRunUrl = 'https://us-central1-surgery-counselling-memo.cloudfunctions.net/transcribeAudioFromStorage';
 
 /// Cloud Functions endpoint for the AI summary service.
 final Uri _summaryFunctionUri = Uri.parse(
-  const String.fromEnvironment(
-    'AI_SUMMARY_URL',
-    defaultValue:
-        'https://us-central1-surgery-counselling-memo.cloudfunctions.net/summarizeCounseling',
-  ),
+  'https://us-central1-surgery-counselling-memo.cloudfunctions.net/summarizeCounseling',
 );
 
 /// Maps the in-app language label to the API locale code.
 String languageCode(String language) => language == '韓国語' ? 'ko-KR' : 'ja-JP';
 
-/// Transcribes the audio file at [filePath] using the Cloud Run service.
+/*// Transcribes the audio file at [filePath] using the Cloud Run service.
 ///
 /// Returns the recognized transcript, or `null` when the response did not
 /// contain transcript text. Throws on network or HTTP failures so callers can
 /// surface an error to the user.
-Future<String?> transcribeAudioFile(String filePath, String language) async {
-  final request = http.MultipartRequest('POST', Uri.parse(_cloudRunUrl));
+Future<String?> transcribeAudioFromStorageFile(
+  String filePath,
+  String language,
+) async {
+  final request = http.MultipartRequest('POST', Uri.parse(cloudRunUrl));
 
   request.files.add(
     await http.MultipartFile.fromPath(
@@ -42,7 +39,7 @@ Future<String?> transcribeAudioFile(String filePath, String language) async {
 
   if (response.statusCode != 200) {
     debugPrint(
-      'transcribeAudioFile failed: ${response.statusCode} $responseBody',
+      'transcribeAudioFromStorageFile failed: ${response.statusCode} $responseBody',
     );
     throw Exception('Failed to transcribe: ${response.statusCode}');
   }
@@ -55,7 +52,7 @@ Future<String?> transcribeAudioFile(String filePath, String language) async {
   final text = transcript.trim();
   return text.isEmpty ? null : text;
 }
-
+*/
 /// Requests an AI summary for [transcript] from the Cloud Functions service.
 ///
 /// Returns the summary text, or `null` when the response did not contain a

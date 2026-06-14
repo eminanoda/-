@@ -194,6 +194,24 @@
       "languageVersion": "3.4"
     },
     {
+      "name": "firebase_storage",
+      "rootUri": "file:///Users/tenna/.pub-cache/hosted/pub.dev/firebase_storage-13.3.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.2"
+    },
+    {
+      "name": "firebase_storage_platform_interface",
+      "rootUri": "file:///Users/tenna/.pub-cache/hosted/pub.dev/firebase_storage_platform_interface-5.2.20",
+      "packageUri": "lib/",
+      "languageVersion": "3.2"
+    },
+    {
+      "name": "firebase_storage_web",
+      "rootUri": "file:///Users/tenna/.pub-cache/hosted/pub.dev/firebase_storage_web-3.11.5",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
       "name": "flutter",
       "rootUri": "file:///Users/tenna/developer/flutter/packages/flutter",
       "packageUri": "lib/",
@@ -330,6 +348,12 @@
       "rootUri": "file:///Users/tenna/.pub-cache/hosted/pub.dev/meta-1.17.0",
       "packageUri": "lib/",
       "languageVersion": "3.5"
+    },
+    {
+      "name": "mime",
+      "rootUri": "file:///Users/tenna/.pub-cache/hosted/pub.dev/mime-2.0.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.2"
     },
     {
       "name": "native_toolchain_c",

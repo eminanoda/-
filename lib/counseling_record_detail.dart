@@ -1,10 +1,15 @@
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:http/http.dart' as http;
 import 'models/conuseling_record.dart';
 import 'services/transcription_service.dart';
+import 'tab_add.dart';
 import 'widgets/premium_ai_summary_card.dart';
 
 class CounselingRecordDetailScreen extends StatefulWidget {
@@ -25,8 +30,9 @@ class CounselingRecordDetailScreen extends StatefulWidget {
 class _CounselingRecordDetailScreenState
     extends State<CounselingRecordDetailScreen> {
   late CounselingRecord _record;
-  bool _isTranscribing = false;
   bool _isSummarizing = false;
+  TranscriptionStage _transcriptionStage = TranscriptionStage.idle;
+  double _uploadProgress = 0;
 
   @override
   void initState() {
@@ -55,40 +61,95 @@ class _CounselingRecordDetailScreenState
     }
   }
 
-  Future<void> _retranscribe() async {
-    final path = await _record.audioFilePath();
-    if (path == null || !File(path).existsSync()) {
-      _alert('音声ファイルが見つかりません。', '');
-      return;
-    }
-
+  Future<String?> _transcribeAudioFromStorageFile(
+    String filePath,
+    String language,
+  ) async {
     setState(() {
-      _isTranscribing = true;
+      _transcriptionStage = TranscriptionStage.uploading;
+      _uploadProgress = 0;
     });
     try {
-      final transcript = await transcribeAudioFile(path, _record.language);
-      if (!mounted) return;
-      if (transcript == null || transcript.trim().isEmpty) {
-        _alert('文字起こしエラー', '文字起こし結果が空です。');
-        return;
-      }
-      await _persist(_record.copyWith(transcript: transcript));
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('文字起こしを更新しました')));
+      // 1. 音声を Firebase Storage へ直接アップロードする(Cloud Run を経由しない)。
+      final gcsUri = await _uploadAudioToStorage(filePath);
 
-      _regenerateSummary();
-    } catch (error) {
-      if (!mounted) return;
-      _alert('文字起こしに失敗しました', '$error');
-    } finally {
+      // 2. Cloud Run へは gs:// URI のみ JSON で渡し、文字起こしを依頼する。
       if (mounted) {
         setState(() {
-          _isTranscribing = false;
+          _transcriptionStage = TranscriptionStage.transcribing;
         });
       }
+      final response = await http.post(
+        Uri.parse(cloudRunUrl),
+        headers: const {'Content-Type': 'application/json'},
+        body: json.encode({
+          'gcsUri': gcsUri,
+          'language': language == '日本語' ? 'ja-JP' : 'ko-KR',
+        }),
+      );
+
+      if (!mounted) return null;
+      setState(() {
+        _transcriptionStage = TranscriptionStage.idle;
+      });
+
+      if (response.statusCode == 200) {
+        final jsonResponse = json.decode(response.body);
+        return jsonResponse['transcript'];
+      } else {
+        debugPrint('transcribe failed: ${response.statusCode}');
+        debugPrint('body: ${response.body}');
+        throw Exception(
+          'Failed to transcribe: ${response.statusCode} ${response.body}',
+        );
+      }
+    } catch (e) {
+      if (!mounted) return null;
+      debugPrint('eee $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('文字起こしに失敗しました: $e')));
+
+      setState(() {
+        _transcriptionStage = TranscriptionStage.idle;
+      });
+
+      return null;
     }
+  }
+
+  /// 音声ファイルを `transcription-uploads/{uid}/{fileName}` へアップロードし、
+  /// 文字起こし用の gs:// URI を返す。
+  Future<String> _uploadAudioToStorage(String filePath) async {
+    var user = FirebaseAuth.instance.currentUser;
+    user ??= (await FirebaseAuth.instance.signInAnonymously()).user;
+    final uid = user!.uid;
+
+    final fileName = filePath.split('/').last;
+    final ext = fileName.contains('.') ? fileName.split('.').last : 'wav';
+    final objectPath = 'transcription-uploads/$uid/$fileName';
+    final ref = FirebaseStorage.instance.ref(objectPath);
+
+    final uploadTask = ref.putFile(
+      File(filePath),
+      SettableMetadata(contentType: 'audio/$ext'),
+    );
+
+    // アップロードの進捗を 0.0〜1.0 で UI に反映する。
+    final progressSubscription = uploadTask.snapshotEvents.listen((snapshot) {
+      if (!mounted || snapshot.totalBytes <= 0) return;
+      setState(() {
+        _uploadProgress = snapshot.bytesTransferred / snapshot.totalBytes;
+      });
+    });
+
+    try {
+      await uploadTask;
+    } finally {
+      await progressSubscription.cancel();
+    }
+
+    return 'gs://${ref.bucket}/$objectPath';
   }
 
   Future<void> _regenerateSummary() async {
@@ -145,7 +206,8 @@ class _CounselingRecordDetailScreenState
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final record = _record;
-    final isBusy = _isTranscribing || _isSummarizing;
+    final isBusy =
+        _transcriptionStage != TranscriptionStage.idle || _isSummarizing;
 
     return Scaffold(
       appBar: AppBar(title: const Text('カウンセリング記録')),
@@ -197,15 +259,32 @@ class _CounselingRecordDetailScreenState
                                 record.transcript!,
                                 style: theme.textTheme.bodyLarge,
                               ),
-                        if (_isTranscribing)
-                          const _ProgressRow(
-                            label: '文字起こしを作成中です\n（数分かかる場合があります）',
+                        if (_transcriptionStage != TranscriptionStage.idle)
+                          TranscriptionProgress(
+                            stage: _transcriptionStage,
+                            uploadProgress: _uploadProgress,
                           )
                         else
                           FilledButton.icon(
                             onPressed: (isBusy || !_hasAudioFile)
                                 ? null
-                                : _retranscribe,
+                                : () async {
+                                    var filePath = await record.audioFilePath();
+                                    print('filePath $filePath');
+                                    var transcript =await
+                                        _transcribeAudioFromStorageFile(
+                                          filePath!,
+                                          record.language,
+                                        );
+                                    if (transcript != null) {
+                                      await _persist(
+                                        _record.copyWith(
+                                          transcript: transcript,
+                                        ),
+                                      );
+                                      _regenerateSummary();
+                                    }
+                                  },
                             icon: const Icon(CupertinoIcons.arrow_clockwise),
                             label: Text(
                               '文字起こし / AI要約を${_hasTranscript ? '再' : ''}実行',

@@ -1,9 +1,6 @@
 import * as speech from '@google-cloud/speech';
 import { Request, Response } from 'express';
 import * as admin from 'firebase-admin';
-import Busboy from 'busboy';
-import * as path from 'path';
-import { randomUUID } from 'crypto';
 import { onRequest } from 'firebase-functions/v2/https';
 import { defineSecret } from 'firebase-functions/params';
 
@@ -22,6 +19,9 @@ const client = new speech.v2.SpeechClient({
 });
 const geminiModel = 'gemini-2.5-flash';
 const geminiApiKey = defineSecret('GEMINI_API_KEY');
+
+// クライアントが音声を直接アップロードする Storage 配下のプレフィックス。
+const UPLOAD_PREFIX = 'transcription-uploads';
 
 function getDefaultStorageBucketName(): string | undefined {
 
@@ -83,7 +83,7 @@ ${transcript}
 }
 
 // https://console.cloud.google.com/run/detail/us-central1/transcribeaudio/observability/logs?project=surgery-counselling-memo
-export const transcribeAudio = onRequest({
+export const transcribeAudioFromStorage = onRequest({
     cpu: 4,           // 0.08〜8 vCPUの間で設定
     memory: "16GiB",   // 128MiB〜32GiBの間で設定
     region: "us-central1" // デプロイする地域
@@ -94,111 +94,51 @@ export const transcribeAudio = onRequest({
       return;
     }
 
-    const busboy = Busboy({
-      headers: req.headers,
-      limits: {
-        files: 1,
-        fileSize: 20 * 1024 * 1024,
-      },
-    });
+    try {
+      // クライアントが Storage へ直接アップロード済みの音声を gs:// URI で受け取る。
+      const gcsUri = typeof req.body?.gcsUri === 'string' ? req.body.gcsUri.trim() : '';
+      const language =
+        typeof req.body?.language === 'string' ? req.body.language : 'ja-JP';
 
-    let audioBuffer: Buffer | null = null;
-    let originalName = 'audio.wav';
-    let mimeType = 'audio/wav';
-    let language = 'ja-JP';
-
-    busboy.on('field', (fieldname, value) => {
-      if (fieldname === 'language') {
-        language = value || 'ja-JP';
-      }
-    });
-
-    busboy.on('file', (fieldname, file, info) => {
-      if (fieldname !== 'audio') {
-        file.resume();
+      const bucketName = getDefaultStorageBucketName();
+      if (!bucketName) {
+        res.status(500).json({ message: 'Storage bucket is not configured' });
         return;
       }
 
-      originalName = info.filename || 'audio.wav';
-      mimeType = info.mimeType || 'audio/wav';
-
-      const chunks: Buffer[] = [];
-
-      file.on('data', (data) => {
-        chunks.push(data);
-      });
-
-      file.on('end', () => {
-        audioBuffer = Buffer.concat(chunks);
-      });
-    });
-
-    busboy.on('error', (error) => {
-      console.error('Busboy error:', error);
-      res.status(500).json({
-        message: 'File upload error',
-        error: error,
-      });
-    });
-
-    busboy.on('finish', async () => {
-      try {
-        if (!audioBuffer) {
-          res.status(400).json({ message: 'No audio file provided' });
-          return;
-        }
-
-        const ext = path.extname(originalName).toLowerCase();
-        const bucketName = getDefaultStorageBucketName();
-
-        if (!bucketName) {
-          res.status(500).json({ message: 'Storage bucket is not configured' });
-          return;
-        }
-
-        const bucket = admin.storage().bucket(bucketName);
-        const objectName = `transcription-uploads/${randomUUID()}${ext || '.wav'}`;
-        const file = bucket.file(objectName);
-        const gcsUri = `gs://${bucket.name}/${objectName}`;
-        const config = buildRecognitionConfig(language);
-
-        await file.save(audioBuffer, {
-          resumable: false,
-          contentType: mimeType,
-          metadata: {
-            cacheControl: 'no-store',
-          },
-        });
-
-        console.log('transcription.gcsUri:', gcsUri);
-
-        let transcription = '';
-        try {
-          transcription = await transcribeFromStorageUri(gcsUri, config);
-        } finally {
-          //todo await file.delete({ ignoreNotFound: true });
-        }
-
-        console.log('transcription:', transcription);
-
-        res.status(200).json({ transcript: transcription });
-      } catch (error: any) {
-        console.error('Error transcribing audio:', error);
-        res.status(500).json({
-          message: 'Error transcribing audio',
-          error: error.message,
-          code: error.code,
-          details: error.details,
-        });
+      // 任意のオブジェクトを文字起こしさせないよう、想定パスのみ許可する。
+      const allowedPrefix = `gs://${bucketName}/${UPLOAD_PREFIX}/`;
+      if (!gcsUri.startsWith(allowedPrefix)) {
+        res.status(400).json({ message: 'Invalid or missing gcsUri' });
+        return;
       }
-    });
 
-    const rawBody = (req as Request & { rawBody?: Buffer }).rawBody;
+      const objectName = gcsUri.slice(`gs://${bucketName}/`.length);
+      const config = buildRecognitionConfig(language);
 
-    if (rawBody) {
-      busboy.end(rawBody);
-    } else {
-      req.pipe(busboy);
+      console.log('transcription.gcsUri:', gcsUri);
+
+      const file = admin.storage().bucket(bucketName).file(objectName);
+
+      let transcription = '';
+      try {
+        transcription = await transcribeFromStorageUri(gcsUri, config);
+      } finally {
+        // 文字起こし後は一時音声を破棄する。
+        await file.delete({ ignoreNotFound: true });
+      }
+
+      console.log('transcription:', transcription);
+
+      res.status(200).json({ transcript: transcription });
+    } catch (error: any) {
+      console.error('Error transcribing audio:', error);
+      res.status(500).json({
+        message: 'Error transcribing audio',
+        error: error.message,
+        code: error.code,
+        details: error.details,
+      });
     }
   }
 );

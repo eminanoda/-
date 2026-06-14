@@ -4,7 +4,8 @@ import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:http_parser/http_parser.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -13,6 +14,7 @@ import 'package:speech_to_text/speech_to_text.dart';
 import 'package:http/http.dart' as http;
 
 import 'models/conuseling_record.dart';
+import 'services/transcription_service.dart';
 import 'widgets/premium_ai_summary_card.dart';
 
 class CounselingRecordScreen extends StatefulWidget {
@@ -444,6 +446,9 @@ class _FormField extends StatelessWidget {
   }
 }
 
+/// リモート文字起こしの進捗段階。
+enum TranscriptionStage { idle, uploading, transcribing }
+
 class _TranscribeCard extends StatefulWidget {
   const _TranscribeCard({
     this.initialLanguage = '日本語',
@@ -479,7 +484,8 @@ class _TranscribeCardState extends State<_TranscribeCard> {
   bool _isPlaying = false;
   bool _isListening = false;
   bool _isTranscribing = false;
-  bool _isTranscribingRemote = false;
+  TranscriptionStage _transcriptionStage = TranscriptionStage.idle;
+  double _uploadProgress = 0;
   bool _transcriptionPlayback = false;
   double _audioLevel = 0;
   Duration _recordDuration = Duration.zero;
@@ -489,10 +495,6 @@ class _TranscribeCardState extends State<_TranscribeCard> {
   String _selectedLanguage = '日本語';
   Timer? _meterTimer;
   Timer? _durationTimer;
-
-  // Firebase Functions URL for speech-to-text service
-  static const String cloudRunUrl =
-      'https://transcribeaudio-4u32ph45oa-uc.a.run.app';
 
   @override
   void initState() {
@@ -676,29 +678,7 @@ class _TranscribeCardState extends State<_TranscribeCard> {
       ).showSnackBar(const SnackBar(content: Text('録音を停止しました')));
 
       if (Platform.isAndroid && _recordedFilePath != null) {
-        setState(() {
-          _isTranscribing = true;
-        });
-
-        final transcript = await _transcribeAudioFile(
-          _recordedFilePath!,
-          _selectedLanguage,
-        );
-
-        if (!mounted) return;
-
-        setState(() {
-          _isTranscribing = false;
-        });
-
-        if (transcript != null && transcript.trim().isNotEmpty) {
-          setState(() {
-            _transcriptController.text = transcript;
-          });
-
-          widget.onTranscriptionCompleted(transcript);
-        }
-
+        await _runRemoteTranscription(_recordedFilePath!);
         return;
       }
 
@@ -772,40 +752,66 @@ class _TranscribeCardState extends State<_TranscribeCard> {
     });
   }
 
-  Future<String?> _transcribeAudioFile(String filePath, String language) async {
-    setState(() {
-      _isTranscribingRemote = true;
-    });
-    try {
-      final request = http.MultipartRequest('POST', Uri.parse(cloudRunUrl));
+  /// 指定したファイルをアップロードしてリモート文字起こしを実行し、
+  /// 成功すれば結果をテキスト欄へ反映して要約コールバックを呼ぶ。
+  /// 3 つの呼び出し元(録音停止・音声追加・再文字起こし)で共通利用する。
+  Future<void> _runRemoteTranscription(String filePath) async {
+    final transcript = await _transcribeAudioFromStorageFile(
+      filePath,
+      _selectedLanguage,
+    );
 
-      request.files.add(
-        await http.MultipartFile.fromPath(
-          'audio',
-          filePath,
-          filename: filePath.split('/').last,
-          contentType: MediaType('audio', 'wav'),
-        ),
-      );
+    if (!mounted) return;
 
-      request.fields['language'] = language == '日本語' ? 'ja-JP' : 'ko-KR';
-
-      final response = await request.send();
-
+    if (transcript != null && transcript.trim().isNotEmpty) {
       setState(() {
-        _isTranscribingRemote = false;
+        _transcriptController.text = transcript;
       });
 
-      final responseBody = await response.stream.bytesToString();
+      widget.onTranscriptionCompleted(transcript);
+    }
+  }
+
+  Future<String?> _transcribeAudioFromStorageFile(
+    String filePath,
+    String language,
+  ) async {
+    setState(() {
+      _transcriptionStage = TranscriptionStage.uploading;
+      _uploadProgress = 0;
+    });
+    try {
+      // 1. 音声を Firebase Storage へ直接アップロードする(Cloud Run を経由しない)。
+      final gcsUri = await _uploadAudioToStorage(filePath);
+
+      // 2. Cloud Run へは gs:// URI のみ JSON で渡し、文字起こしを依頼する。
+      if (mounted) {
+        setState(() {
+          _transcriptionStage = TranscriptionStage.transcribing;
+        });
+      }
+      final response = await http.post(
+        Uri.parse(cloudRunUrl),
+        headers: const {'Content-Type': 'application/json'},
+        body: json.encode({
+          'gcsUri': gcsUri,
+          'language': language == '日本語' ? 'ja-JP' : 'ko-KR',
+        }),
+      );
+
+      if (!mounted) return null;
+      setState(() {
+        _transcriptionStage = TranscriptionStage.idle;
+      });
 
       if (response.statusCode == 200) {
-        final jsonResponse = json.decode(responseBody);
+        final jsonResponse = json.decode(response.body);
         return jsonResponse['transcript'];
       } else {
         debugPrint('transcribe failed: ${response.statusCode}');
-        debugPrint('body: $responseBody');
+        debugPrint('body: ${response.body}');
         throw Exception(
-          'Failed to transcribe: ${response.statusCode} $responseBody',
+          'Failed to transcribe: ${response.statusCode} ${response.body}',
         );
       }
     } catch (e) {
@@ -816,10 +822,44 @@ class _TranscribeCardState extends State<_TranscribeCard> {
       ).showSnackBar(SnackBar(content: Text('文字起こしに失敗しました: $e')));
 
       setState(() {
-        _isTranscribingRemote = false;
+        _transcriptionStage = TranscriptionStage.idle;
       });
       return null;
     }
+  }
+
+  /// 音声ファイルを `transcription-uploads/{uid}/{fileName}` へアップロードし、
+  /// 文字起こし用の gs:// URI を返す。
+  Future<String> _uploadAudioToStorage(String filePath) async {
+    var user = FirebaseAuth.instance.currentUser;
+    user ??= (await FirebaseAuth.instance.signInAnonymously()).user;
+    final uid = user!.uid;
+
+    final fileName = filePath.split('/').last;
+    final ext = fileName.contains('.') ? fileName.split('.').last : 'wav';
+    final objectPath = 'transcription-uploads/$uid/$fileName';
+    final ref = FirebaseStorage.instance.ref(objectPath);
+
+    final uploadTask = ref.putFile(
+      File(filePath),
+      SettableMetadata(contentType: 'audio/$ext'),
+    );
+
+    // アップロードの進捗を 0.0〜1.0 で UI に反映する。
+    final progressSubscription = uploadTask.snapshotEvents.listen((snapshot) {
+      if (!mounted || snapshot.totalBytes <= 0) return;
+      setState(() {
+        _uploadProgress = snapshot.bytesTransferred / snapshot.totalBytes;
+      });
+    });
+
+    try {
+      await uploadTask;
+    } finally {
+      await progressSubscription.cancel();
+    }
+
+    return 'gs://${ref.bucket}/$objectPath';
   }
 
   Future<void> _pickAudioFile() async {
@@ -863,25 +903,7 @@ class _TranscribeCardState extends State<_TranscribeCard> {
     ).showSnackBar(SnackBar(content: Text('音声ファイルを追加しました: $fileName')));
 
     // Transcribe using Cloud Run
-    setState(() {
-      _isTranscribing = true;
-    });
-    final transcript = await _transcribeAudioFile(
-      _recordedFilePath!,
-      _selectedLanguage,
-    );
-    if (!mounted) return;
-    setState(() {
-      _isTranscribing = false;
-    });
-
-    if (transcript != null) {
-      setState(() {
-        _transcriptController.text = transcript;
-      });
-      // Generate AI summary after transcription completes
-      widget.onTranscriptionCompleted(transcript);
-    }
+    await _runRemoteTranscription(_recordedFilePath!);
   }
 
   Future<void> _togglePlayback() async {
@@ -927,17 +949,7 @@ class _TranscribeCardState extends State<_TranscribeCard> {
       return;
     }
 
-    final transcript = await _transcribeAudioFile(path, _selectedLanguage);
-
-    if (!mounted) return;
-
-    if (transcript != null && transcript.trim().isNotEmpty) {
-      setState(() {
-        _transcriptController.text = transcript;
-      });
-
-      widget.onTranscriptionCompleted(transcript);
-    }
+    await _runRemoteTranscription(path);
   }
 
   @override
@@ -1059,18 +1071,10 @@ class _TranscribeCardState extends State<_TranscribeCard> {
                 style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
               ),
             const SizedBox(height: 14),
-            if (_isTranscribingRemote)
-              const Row(
-                spacing: 12,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 3),
-                  ),
-                  Text('文字起こしを作成中です'),
-                ],
+            if (_transcriptionStage != TranscriptionStage.idle)
+              TranscriptionProgress(
+                stage: _transcriptionStage,
+                uploadProgress: _uploadProgress,
               )
             else
               Column(
@@ -1080,14 +1084,11 @@ class _TranscribeCardState extends State<_TranscribeCard> {
                     label: '文字起こし結果',
                     maxLines: 6,
                     controller: _transcriptController,
-                    readOnly: _isTranscribingRemote || _isTranscribing,
+                    readOnly: _isTranscribing,
                   ),
                   const SizedBox(height: 10),
                   OutlinedButton.icon(
-                    onPressed:
-                        _recordedFilePath != null &&
-                            !_isRecording &&
-                            !_isTranscribingRemote
+                    onPressed: _recordedFilePath != null && !_isRecording
                         ? _retryRemoteTranscription
                         : null,
                     icon: const Icon(CupertinoIcons.arrow_clockwise),
@@ -1098,6 +1099,53 @@ class _TranscribeCardState extends State<_TranscribeCard> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// アップロード中／文字起こし中の進捗を視覚的に表示するウィジェット。
+class TranscriptionProgress extends StatelessWidget {
+  const TranscriptionProgress({
+    required this.stage,
+    required this.uploadProgress,
+  });
+
+  final TranscriptionStage stage;
+  final double uploadProgress;
+
+  @override
+  Widget build(BuildContext context) {
+    final isUploading = stage == TranscriptionStage.uploading;
+    final percent = (uploadProgress.clamp(0.0, 1.0) * 100).round();
+    final label = isUploading ? '音声を解析中… $percent%' : '文字起こしを作成中';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          spacing: 12,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 3),
+            ),
+            Text(label),
+          ],
+        ),
+        const SizedBox(height: 12),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            // アップロードは進捗率を、文字起こしは不確定(待機)として表示する。
+            value: isUploading ? uploadProgress.clamp(0.0, 1.0) : null,
+            minHeight: 6,
+            backgroundColor: const Color(0xFFD5E2F4),
+            valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF5672D9)),
+          ),
+        ),
+      ],
     );
   }
 }

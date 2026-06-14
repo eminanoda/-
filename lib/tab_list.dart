@@ -256,7 +256,7 @@ class _RecordCard extends StatelessWidget {
                     flex: 2,
                     child: OutlinedButton.icon(
                       onPressed: onEdit,
-                      icon: const Icon(CupertinoIcons.pencil),
+                      icon: const Icon(Icons.edit),
                       label: const Text('編集'),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
