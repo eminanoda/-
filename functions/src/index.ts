@@ -12,7 +12,9 @@ admin.initializeApp();
 // Speech-to-Text v2 API。リージョナルエンドポイント経由で利用する。
 const PROJECT_ID = 'surgery-counselling-memo';
 const SPEECH_LOCATION = 'us-central1';
-const SPEECH_MODEL = 'long';
+// chirp_2 は us-central1 で ja-JP / ko-KR をサポートする多言語モデル。
+// 'long' は global ロケーションでしか日本語に対応していないため使用しない。
+const SPEECH_MODEL = 'chirp_2';
 const RECOGNIZER = `projects/${PROJECT_ID}/locations/${SPEECH_LOCATION}/recognizers/_`;
 
 const client = new speech.v2.SpeechClient({

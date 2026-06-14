@@ -51,18 +51,14 @@ class _CounselingRecordDetailScreenState
       await updateCounselingRecordAt(widget.recordIndex!, updated);
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('保存に失敗しました: $error')));
+      _alert('保存に失敗しました', '$error');
     }
   }
 
   Future<void> _retranscribe() async {
-    final path =await _record.audioFilePath();
+    final path = await _record.audioFilePath();
     if (path == null || !File(path).existsSync()) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('音声ファイルが見つかりません。')));
+      _alert('音声ファイルが見つかりません。', '');
       return;
     }
 
@@ -73,9 +69,7 @@ class _CounselingRecordDetailScreenState
       final transcript = await transcribeAudioFile(path, _record.language);
       if (!mounted) return;
       if (transcript == null || transcript.trim().isEmpty) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('文字起こし結果が空でした。')));
+        _alert('文字起こしエラー', '文字起こし結果が空です。');
         return;
       }
       await _persist(_record.copyWith(transcript: transcript));
@@ -87,9 +81,7 @@ class _CounselingRecordDetailScreenState
       _regenerateSummary();
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('文字起こしに失敗しました: $error')));
+      _alert('文字起こしに失敗しました', '$error');
     } finally {
       if (mounted) {
         setState(() {
@@ -102,9 +94,7 @@ class _CounselingRecordDetailScreenState
   Future<void> _regenerateSummary() async {
     final transcript = _record.transcript;
     if (transcript == null || transcript.trim().isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('先に文字起こしを作成してください。')));
+      _alert('先に文字起こしを作成してください。', '');
       return;
     }
 
@@ -115,21 +105,15 @@ class _CounselingRecordDetailScreenState
       final summary = await fetchAiSummary(transcript, _record.language);
       if (!mounted) return;
       if (summary == null || summary.trim().isEmpty) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('要約結果が空でした。')));
+        _alert('要約エラー', '要約結果が空です。');
         return;
       }
       await _persist(_record.copyWith(aiSummary: summary));
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('AI要約を更新しました')));
+      _alert('AI要約を更新しました', '');
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('AI要約に失敗しました: $error')));
+      _alert('AI要約に失敗しました', '$error');
     } finally {
       if (mounted) {
         setState(() {
@@ -137,6 +121,24 @@ class _CounselingRecordDetailScreenState
         });
       }
     }
+  }
+
+  void _alert(String title, String descrption) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(descrption),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -181,7 +183,10 @@ class _CounselingRecordDetailScreenState
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _AudioPlaybackCard(record: record),
-                        PremiumAiSummaryCard(summary: record.aiSummary),
+                        if (_isSummarizing)
+                          const _ProgressRow(label: 'AI要約を作成中です')
+                        else
+                          PremiumAiSummaryCard(summary: record.aiSummary),
                         Text('文字起こし', style: theme.textTheme.titleMedium),
                         record.transcript == null
                             ? const _UnavailableBlock(
@@ -192,9 +197,7 @@ class _CounselingRecordDetailScreenState
                                 record.transcript!,
                                 style: theme.textTheme.bodyLarge,
                               ),
-                        if (_isSummarizing)
-                          const _ProgressRow(label: 'AI要約を作成中です')
-                        else if (_isTranscribing)
+                        if (_isTranscribing)
                           const _ProgressRow(
                             label: '文字起こしを作成中です\n（数分かかる場合があります）',
                           )
@@ -361,7 +364,7 @@ class _AudioPlaybackCardState extends State<_AudioPlaybackCard> {
   }
 
   Future<void> _togglePlayback() async {
-    final path =await widget.record.audioFilePath();
+    final path = await widget.record.audioFilePath();
     if (path == null || !File(path).existsSync()) {
       return;
     }
