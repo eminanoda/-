@@ -3,10 +3,12 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:surgery_memo/firebase_options.dart';
 import 'tab_add.dart';
 import 'tab_list.dart';
 import 'widgets/background_glow.dart';
+import 'widgets/banner_ad.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,6 +24,12 @@ Future<void> main() async {
     }
   } catch (e) {
     debugPrint('Firebase error $e');
+  }
+
+  try {
+    await MobileAds.instance.initialize();
+  } catch (e) {
+    debugPrint('AdMob init error $e');
   }
 
   runApp(const SurgeryMemoApp());
@@ -197,29 +205,51 @@ class _HomeShellState extends State<HomeShell> {
           ],
         ),
       ),
-      bottomNavigationBar: NavigationBar(
-        height: 78,
-        backgroundColor: Colors.white.withValues(alpha: 0.88),
-        indicatorColor: const Color(0xFFDDE7FF),
-        selectedIndex: _index,
-        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        onDestinationSelected: (value) => setState(() => _index = value),
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(CupertinoIcons.doc_text),
-            selectedIcon: Icon(CupertinoIcons.doc_text_fill),
-            label: '記録一覧',
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // NavigationBar は内部の SafeArea で上下のセーフエリア分 padding を
+          // 確保する。bottomNavigationBar の位置ではステータスバー分の上部
+          // インセットも渡ってきて上に隙間ができるため、上下とも余白を外し、
+          // 下部インセットはバナー側の SafeArea でまとめて確保する。
+          MediaQuery.removePadding(
+            context: context,
+            removeTop: true,
+            removeBottom: true,
+            child: NavigationBar(
+              height: 78,
+              backgroundColor: Colors.white.withValues(alpha: 0.88),
+              indicatorColor: const Color(0xFFDDE7FF),
+              selectedIndex: _index,
+              labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+              onDestinationSelected: (value) => setState(() => _index = value),
+              destinations: const [
+                NavigationDestination(
+                  icon: Icon(CupertinoIcons.doc_text),
+                  selectedIcon: Icon(CupertinoIcons.doc_text_fill),
+                  label: '記録一覧',
+                ),
+                NavigationDestination(
+                  icon: Icon(CupertinoIcons.square_pencil),
+                  selectedIcon: Icon(CupertinoIcons.square_pencil),
+                  label: '記録作成',
+                ),
+                /*NavigationDestination(
+                  icon: Icon(CupertinoIcons.star_circle),
+                  selectedIcon: Icon(CupertinoIcons.star_circle_fill),
+                  label: '有料機能',
+                ),*/
+              ],
+            ),
           ),
-          NavigationDestination(
-            icon: Icon(CupertinoIcons.square_pencil),
-            selectedIcon: Icon(CupertinoIcons.square_pencil),
-            label: '記録作成',
+          SafeArea(
+            top: false,
+            child: Container(
+              color: Colors.white.withValues(alpha: 0.88),
+              alignment: Alignment.center,
+              child: const BannerAdWidget(),
+            ),
           ),
-          /*NavigationDestination(
-            icon: Icon(CupertinoIcons.star_circle),
-            selectedIcon: Icon(CupertinoIcons.star_circle_fill),
-            label: '有料機能',
-          ),*/
         ],
       ),
     );

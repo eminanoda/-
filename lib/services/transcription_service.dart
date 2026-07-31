@@ -4,6 +4,12 @@ import 'package:http/http.dart' as http;
 
 /// Cloud Run endpoint for the speech-to-text service.
 const String cloudRunUrl = 'https://us-central1-surgery-counselling-memo.cloudfunctions.net/transcribeAudioFromStorage';
+/**
+ * TEST:
+ * curl -X POST "https://us-central1-surgery-counselling-memo.cloudfunctions.net/transcribeAudioFromStorage" \
+     -H "Content-Type: application/json" \
+     -d '{"gcsUri": "ここにGCSのURI", "language": "ja-JP"}'
+ */
 
 /// Cloud Functions endpoint for the AI summary service.
 final Uri _summaryFunctionUri = Uri.parse(
